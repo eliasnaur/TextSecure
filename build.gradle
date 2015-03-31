@@ -134,6 +134,8 @@ android {
         minSdkVersion 9
         targetSdkVersion 19
 
+		applicationId "com.hoenirphone.securesms"
+
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         buildConfigField "long", "BUILD_TIMESTAMP", System.currentTimeMillis() + "L"
     }
