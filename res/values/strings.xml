@@ -329,6 +329,8 @@
     <string name="RegistrationProblemsActivity_possible_problems">Possible problems</string>
 
     <!-- RegistrationProgressActivity -->
+	<string name="RegistrationProgressActivity_verifying_handle">Verifying handle</string>
+
     <string name="RegistrationProgressActivity_verifying_number">Verifying number</string>
     <string name="RegistrationProgressActivity_edit_s">Edit %s</string>
     <string name="RegistrationProgressActivity_registration_complete">Registration complete!</string>
@@ -640,7 +642,10 @@
     <string name="registration_progress_activity__textsecure_will_now_automatically_verify_your_number_with_a_confirmation_sms_message">
         TextSecure will now automatically verify your number with a confirmation SMS message.
     </string>
-    <string name="registration_progress_activity__connecting">Connecting...</string>
+	<string name="registration_progress_activity__connecting">Connecting...</string>
+
+	<string name="registration_progress_activity__waiting_for_handle_verification">Waiting for verification...</string>
+
     <string name="registration_progress_activity__waiting_for_sms_verification">Waiting for SMS
         verification...
     </string>

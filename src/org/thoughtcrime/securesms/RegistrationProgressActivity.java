@@ -94,7 +94,7 @@ public class RegistrationProgressActivity extends BaseActionBarActivity {
   @Override
   public void onCreate(Bundle bundle) {
     super.onCreate(bundle);
-    getSupportActionBar().setTitle(getString(R.string.RegistrationProgressActivity_verifying_number));
+    getSupportActionBar().setTitle(getString(R.string.RegistrationProgressActivity_verifying_handle));
     setContentView(R.layout.registration_progress_activity);
 
     initializeResources();
@@ -224,7 +224,7 @@ public class RegistrationProgressActivity extends BaseActionBarActivity {
     this.verificationText.setTextColor(UNFOCUSED_COLOR);
     this.generatingKeysText.setTextColor(UNFOCUSED_COLOR);
     this.gcmRegistrationText.setTextColor(UNFOCUSED_COLOR);
-    this.timeoutProgressLayout.setVisibility(View.VISIBLE);
+    this.timeoutProgressLayout.setVisibility(View.INVISIBLE);
   }
 
   private void handleStateVerifying() {
@@ -244,7 +244,7 @@ public class RegistrationProgressActivity extends BaseActionBarActivity {
     this.generatingKeysText.setTextColor(UNFOCUSED_COLOR);
     this.gcmRegistrationText.setTextColor(UNFOCUSED_COLOR);
     this.registrationProgress.setVisibility(View.VISIBLE);
-    this.timeoutProgressLayout.setVisibility(View.VISIBLE);
+    this.timeoutProgressLayout.setVisibility(View.INVISIBLE);
   }
 
   private void handleStateGeneratingKeys() {
