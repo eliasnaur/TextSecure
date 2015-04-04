@@ -162,7 +162,7 @@ public class RoutingActivity extends PassphraseRequiredActionBarActivity {
   }
 
   private Intent getPushRegistrationIntent() {
-    Intent intent = new Intent(this, RegistrationActivity.class);
+    Intent intent = new Intent(this, IdRegistrationActivity.class);
     intent.putExtra("master_secret", masterSecret);
 
     return intent;

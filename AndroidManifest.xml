@@ -55,14 +55,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <intent-filter>
+			<!--<intent-filter>
                   <action android:name="android.intent.action.SENDTO"/>
                   <category android:name="android.intent.category.DEFAULT" />
                   <data android:scheme="sms" />
                   <data android:scheme="smsto" />
                   <data android:scheme="mms" />
                   <data android:scheme="mmsto" />
-            </intent-filter>
+			  </intent-filter>-->
 
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
@@ -85,10 +85,10 @@
     <activity android:name=".ImportExportActivity"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name=".PromptMmsActivity"
+		  <!--<activity android:name=".PromptMmsActivity"
               android:label="Configure MMS Settings"
               android:windowSoftInputMode="stateUnchanged"              
-              android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
+			  android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>-->
 
     <activity android:name=".DeviceProvisioningActivity"
               android:theme="@style/TextSecure.DialogActivity"
@@ -187,9 +187,13 @@
     <activity android:name=".ApplicationPreferencesActivity"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name=".RegistrationActivity"
+    <activity android:name=".IdRegistrationActivity"
               android:windowSoftInputMode="stateUnchanged"
-              android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
+			  android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
+
+		  <!--<activity android:name=".RegistrationActivity"
+              android:windowSoftInputMode="stateUnchanged"
+			  android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>-->
 
     <activity android:name=".RegistrationProgressActivity"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>

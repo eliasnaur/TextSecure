@@ -291,6 +291,8 @@
     <string name="ReceiveKeyActivity_processing_key_exchange">Processing key exchange…</string>
 
     <!-- RegistrationActivity -->
+    <string name="RegistrationActivity_you_must_specify_a_handle">You must specify a handle</string>
+
     <string name="RegistrationActivity_connect_with_textsecure">Connect With TextSecure</string>
     <string name="RegistrationActivity_select_your_country">Select your country</string>
     <string name="RegistrationActivity_you_must_specify_your_country_code">You must specify your
@@ -563,6 +565,9 @@
     <string name="receive_key_activity__complete">Complete</string>
 
     <!-- registration_activity -->
+    <string name="registration_activity__your_chat_handle">YOUR CHAT HANDLE</string>
+    <string name="registration_activity__handle">HANDLE</string>
+
     <string name="registration_activity__textsecure_can_use_instant_messages_to_avoid_sms_charges_when_communicating_with_other_textsecure_users">
         Verify your phone number to connect with TextSecure.
     </string>
