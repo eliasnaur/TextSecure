@@ -31,6 +31,7 @@ import org.whispersystems.libaxolotl.state.SignedPreKeyRecord;
 import org.whispersystems.libaxolotl.util.KeyHelper;
 import org.whispersystems.libaxolotl.util.guava.Optional;
 import org.whispersystems.textsecure.api.TextSecureAccountManager;
+import org.whispersystems.textsecure.api.push.exceptions.AuthorizationFailedException;
 import org.whispersystems.textsecure.api.push.exceptions.ExpectationFailedException;
 
 import java.io.IOException;
@@ -218,6 +219,10 @@ public class RegistrationService extends Service {
       Log.w("RegistrationService", uoe);
       setState(new RegistrationState(RegistrationState.STATE_GCM_UNSUPPORTED, number));
       broadcastComplete(false);
+	} catch (AuthorizationFailedException afe) {
+      Log.w("RegistrationService", afe);
+      setState(new RegistrationState(RegistrationState.STATE_ID_EXISTS, number));
+      broadcastComplete(false);
     /*} catch (AccountVerificationTimeoutException avte) {
       Log.w("RegistrationService", avte);
       setState(new RegistrationState(RegistrationState.STATE_TIMEOUT, number));
@@ -355,6 +360,7 @@ public class RegistrationService extends Service {
     public static final int STATE_GENERATING_KEYS      = 13;
 
     public static final int STATE_MULTI_REGISTERED     = 14;
+    public static final int STATE_ID_EXISTS            = 15;
 
     public final int    state;
     public final String number;

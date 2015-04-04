@@ -143,6 +143,65 @@
         </LinearLayout>
 
         <LinearLayout
+                android:id="@+id/id_exists_layout"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginLeft="16dip"
+                android:layout_marginRight="16dip"
+                android:orientation="vertical"
+                android:visibility="gone" >
+
+            <RelativeLayout
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dip"
+                    android:layout_marginTop="10dip"
+                    android:background="@drawable/background_pane" >
+
+                <ImageView
+                        android:id="@+id/connectivity_alert"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentLeft="true"
+                        android:paddingLeft="4dip"
+                        android:paddingRight="4dip"
+                        android:src="@drawable/alert"
+                        android:contentDescription="@string/registration_progress_activity__alert"/>
+
+                <TextView
+                        style="@style/Registration.Constant"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignBottom="@id/connectivity_alert"
+                        android:layout_toRightOf="@id/connectivity_alert"
+                        android:paddingLeft="4.0dip"
+                        android:paddingRight="8.0dip"
+                        android:text="@string/registration_progress_activity__handle_exists"
+                        android:textColor="#333333"
+                        android:textSize="16.0sp" />
+
+                <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentLeft="true"
+                        android:layout_below="@+id/connectivity_alert"
+                        android:paddingLeft="4dip"
+                        android:paddingRight="4dip"
+                        android:text="@string/registration_progress_activity__the_handle_is_already_registered_choose_another" />
+            </RelativeLayout>
+
+            <Button
+                    android:id="@+id/id_exists_edit_button"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginBottom="10.0dip"
+                    android:gravity="center"
+                    android:text="@string/registration_progress_activity__edit_number"
+                    android:textStyle="bold" />
+        </LinearLayout>
+        <LinearLayout
                 android:id="@+id/connectivity_failure_layout"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"

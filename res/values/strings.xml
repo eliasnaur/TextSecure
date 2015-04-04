@@ -618,7 +618,13 @@
     </string>
     <string name="registration_progress_activity__verify">Verify</string>
     <string name="registration_progress_activity__call_me">Call me</string>
-    <string name="registration_progress_activity__edit_number">Edit number</string>
+	<string name="registration_progress_activity__edit_number">Edit number</string>
+
+	<string name="registration_progress_activity__handle_exists">Handle is not available.</string>
+	<string name="registration_progress_activity__the_handle_is_already_registered_choose_another">
+		The handle is already registered, please choose a different handle.
+    </string>
+
     <string name="registration_progress_activity__connectivity_error">Connectivity error.</string>
     <string name="registration_progress_activity__textsecure_was_unable_to_connect_to_the_push_service">
         TextSecure was unable to connect to the push service.

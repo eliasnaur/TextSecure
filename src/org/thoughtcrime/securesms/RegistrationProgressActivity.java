@@ -60,6 +60,7 @@ public class RegistrationProgressActivity extends BaseActionBarActivity {
 
   private LinearLayout registrationLayout;
   private LinearLayout verificationFailureLayout;
+  private LinearLayout idExistsLayout;
   private LinearLayout connectivityFailureLayout;
   private RelativeLayout timeoutProgressLayout;
 
@@ -82,6 +83,7 @@ public class RegistrationProgressActivity extends BaseActionBarActivity {
   private TextView    gcmRegistrationText;
 
   private Button      verificationFailureButton;
+  private Button      idExistsButton;
   private Button      connectivityFailureButton;
   private Button      callButton;
   private Button      verifyButton;
@@ -134,6 +136,7 @@ public class RegistrationProgressActivity extends BaseActionBarActivity {
     this.masterSecret              = getIntent().getParcelableExtra("master_secret");
     this.registrationLayout        = (LinearLayout)findViewById(R.id.registering_layout);
     this.verificationFailureLayout = (LinearLayout)findViewById(R.id.verification_failure_layout);
+    this.idExistsLayout            = (LinearLayout)findViewById(R.id.id_exists_layout);
     this.connectivityFailureLayout = (LinearLayout)findViewById(R.id.connectivity_failure_layout);
     this.registrationProgress      = (ProgressBar) findViewById(R.id.registration_progress);
     this.connectingProgress        = (ProgressBar) findViewById(R.id.connecting_progress);
@@ -150,6 +153,7 @@ public class RegistrationProgressActivity extends BaseActionBarActivity {
     this.generatingKeysText        = (TextView)    findViewById(R.id.generating_keys_text);
     this.gcmRegistrationText       = (TextView)    findViewById(R.id.gcm_registering_text);
     this.verificationFailureButton = (Button)      findViewById(R.id.verification_failure_edit_button);
+    this.idExistsButton            = (Button)      findViewById(R.id.id_exists_edit_button);
     this.connectivityFailureButton = (Button)      findViewById(R.id.connectivity_failure_edit_button);
     this.callButton                = (Button)      findViewById(R.id.call_button);
     this.verifyButton              = (Button)      findViewById(R.id.verify_button);
@@ -160,6 +164,7 @@ public class RegistrationProgressActivity extends BaseActionBarActivity {
     editButton.setOnClickListener(new EditButtonListener());
     this.verificationFailureButton.setOnClickListener(new EditButtonListener());
     this.connectivityFailureButton.setOnClickListener(new EditButtonListener());
+    this.idExistsButton.setOnClickListener(new EditButtonListener());
   }
 
   private void initializeLinks() {
@@ -211,6 +216,7 @@ public class RegistrationProgressActivity extends BaseActionBarActivity {
   private void handleStateConnecting() {
     this.registrationLayout.setVisibility(View.VISIBLE);
     this.verificationFailureLayout.setVisibility(View.GONE);
+    this.idExistsLayout.setVisibility(View.GONE);
     this.connectivityFailureLayout.setVisibility(View.GONE);
     this.connectingProgress.setVisibility(View.VISIBLE);
     this.connectingCheck.setVisibility(View.INVISIBLE);
@@ -230,6 +236,7 @@ public class RegistrationProgressActivity extends BaseActionBarActivity {
   private void handleStateVerifying() {
     this.registrationLayout.setVisibility(View.VISIBLE);
     this.verificationFailureLayout.setVisibility(View.GONE);
+    this.idExistsLayout.setVisibility(View.GONE);
     this.connectivityFailureLayout.setVisibility(View.GONE);
     this.connectingProgress.setVisibility(View.INVISIBLE);
     this.connectingCheck.setVisibility(View.VISIBLE);
@@ -250,6 +257,7 @@ public class RegistrationProgressActivity extends BaseActionBarActivity {
   private void handleStateGeneratingKeys() {
     this.registrationLayout.setVisibility(View.VISIBLE);
     this.verificationFailureLayout.setVisibility(View.GONE);
+    this.idExistsLayout.setVisibility(View.GONE);
     this.connectivityFailureLayout.setVisibility(View.GONE);
     this.connectingProgress.setVisibility(View.INVISIBLE);
     this.connectingCheck.setVisibility(View.VISIBLE);
@@ -270,6 +278,7 @@ public class RegistrationProgressActivity extends BaseActionBarActivity {
   private void handleStateGcmRegistering() {
     this.registrationLayout.setVisibility(View.VISIBLE);
     this.verificationFailureLayout.setVisibility(View.GONE);
+    this.idExistsLayout.setVisibility(View.GONE);
     this.connectivityFailureLayout.setVisibility(View.GONE);
     this.connectingProgress.setVisibility(View.INVISIBLE);
     this.connectingCheck.setVisibility(View.VISIBLE);
@@ -285,6 +294,15 @@ public class RegistrationProgressActivity extends BaseActionBarActivity {
     this.gcmRegistrationText.setTextColor(FOCUSED_COLOR);
     this.registrationProgress.setVisibility(View.INVISIBLE);
     this.timeoutProgressLayout.setVisibility(View.INVISIBLE);
+  }
+
+  private void handleIdExists(RegistrationState state) {
+    this.registrationLayout.setVisibility(View.GONE);
+    this.verificationFailureLayout.setVisibility(View.GONE);
+    this.idExistsLayout.setVisibility(View.VISIBLE);
+    this.connectivityFailureLayout.setVisibility(View.GONE);
+    this.idExistsButton.setText(String.format(getString(R.string.RegistrationProgressActivity_edit_s),
+                                                         state.number));
   }
 
   private void handleGcmTimeout(RegistrationState state) {
@@ -303,6 +321,7 @@ public class RegistrationProgressActivity extends BaseActionBarActivity {
     this.verifyButton.setEnabled(false);
     this.codeEditText.setEnabled(false);
     this.registrationLayout.setVisibility(View.GONE);
+    this.idExistsLayout.setVisibility(View.GONE);
     this.connectivityFailureLayout.setVisibility(View.GONE);
     this.verificationFailureLayout.setVisibility(View.VISIBLE);
     this.verificationFailureButton.setText(String.format(getString(R.string.RegistrationProgressActivity_edit_s),
@@ -312,6 +331,7 @@ public class RegistrationProgressActivity extends BaseActionBarActivity {
   private void handleConnectivityError(RegistrationState state) {
     this.registrationLayout.setVisibility(View.GONE);
     this.verificationFailureLayout.setVisibility(View.GONE);
+    this.idExistsLayout.setVisibility(View.GONE);
     this.connectivityFailureLayout.setVisibility(View.VISIBLE);
     this.connectivityFailureButton.setText(String.format(getString(R.string.RegistrationProgressActivity_edit_s),
                                                          /*PhoneNumberFormatter.formatNumberInternational(*/state.number/*)*/));
@@ -414,6 +434,7 @@ public class RegistrationProgressActivity extends BaseActionBarActivity {
       case RegistrationState.STATE_NETWORK_ERROR:        handleConnectivityError(state);          break;
       case RegistrationState.STATE_MULTI_REGISTERED:     handleMultiRegistrationError(state);     break;
       case RegistrationState.STATE_VOICE_REQUESTED:      handleVerificationRequestedVoice(state); break;
+      case RegistrationState.STATE_ID_EXISTS:            handleIdExists(state);                   break;
       }
     }
   }
