@@ -98,7 +98,7 @@ public class IdRegistrationActivity extends BaseActionBarActivity {
       Intent nextIntent = getIntent().getParcelableExtra("next_intent");
 
       if (nextIntent == null) {
-        nextIntent = new Intent(IdRegistrationActivity.this, RoutingActivity.class);
+        nextIntent = new Intent(IdRegistrationActivity.this, ConversationListActivity.class);
       }
 
       startActivity(nextIntent);
