@@ -14,6 +14,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'witness'
 
 repositories {
+    mavenLocal()
     maven {
         url "https://repo1.maven.org/maven2/"
     }
@@ -27,7 +28,6 @@ repositories {
         url "https://raw.github.com/whispersystems/maven/master/shortcutbadger/releases/"
     }
     jcenter()
-    mavenLocal()
 }
 
 dependencies {
@@ -106,7 +106,7 @@ dependencyVerification {
             'com.nineoldandroids:library:68025a14e3e7673d6ad2f95e4b46d78d7d068343aa99256b686fe59de1b3163a',
             'javax.inject:javax.inject:91c77044a50c481636c32d916fd89c9118a72195390452c81065080f957de7ff',
             'com.madgag.spongycastle:core:8d6240b974b0aca4d3da9c7dd44d42339d8a374358aca5fc98e50a995764511f',
-            'org.whispersystems:textsecure-java:141132e1c917759bdc285f80ed9e9784be0dc99ec6872f738439505955832906',
+            'org.whispersystems:textsecure-java:7b5f29dc7ee47f68f86e91db23e6fe710b53eaecbee532d0cd91bfb7cfa670c5',
             'org.whispersystems:axolotl-android:40d3db5004a84749a73f68d2f0d01b2ae35a73c54df96d8c6c6723b96efb6fc0',
             'com.googlecode.libphonenumber:libphonenumber:eba17eae81dd622ea89a00a3a8c025b2f25d342e0d9644c5b62e16f15687c3ab',
             'com.google.protobuf:protobuf-java:e0c1c64575c005601725e7c6a02cebf9e1285e888f756b2a1d73ffa8d725cc74',
