@@ -62,6 +62,12 @@ public class ConversationFragment extends ListFragment
   private ActionMode   actionMode;
 
   @Override
+  public void onCreate(Bundle icicle) {
+    super.onCreate(icicle);
+    this.masterSecret = getArguments().getParcelable("master_secret");
+  }
+
+  @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle bundle) {
     return inflater.inflate(R.layout.conversation_fragment, container, false);
   }
@@ -97,11 +103,9 @@ public class ConversationFragment extends ListFragment
 
     initializeResources();
     initializeListAdapter();
-    getLoaderManager().restartLoader(0, null, this);
   }
 
   private void initializeResources() {
-    this.masterSecret = this.getActivity().getIntent().getParcelableExtra("master_secret");
     this.recipients   = RecipientFactory.getRecipientsForIds(getActivity(), getActivity().getIntent().getLongArrayExtra("recipients"), true);
     this.threadId     = this.getActivity().getIntent().getLongExtra("thread_id", -1);
   }
@@ -112,7 +116,7 @@ public class ConversationFragment extends ListFragment
                                                   (!this.recipients.isSingleRecipient()) || this.recipients.isGroupRecipient(),
                                                   DirectoryHelper.isPushDestination(getActivity(), this.recipients)));
       getListView().setRecyclerListener((ConversationAdapter)getListAdapter());
-      getLoaderManager().initLoader(0, null, this);
+      getLoaderManager().restartLoader(0, null, this);
     }
   }
 
@@ -122,12 +126,9 @@ public class ConversationFragment extends ListFragment
   }
 
   private void setCorrectMenuVisibility(Menu menu) {
-    ConversationAdapter adapter        = (ConversationAdapter) getListAdapter();
     List<MessageRecord> messageRecords = getSelectedMessageRecords();
 
     if (actionMode != null && messageRecords.size() == 0) {
-      adapter.getBatchSelected().clear();
-      adapter.notifyDataSetChanged();
       actionMode.finish();
       return;
     }
@@ -165,9 +166,11 @@ public class ConversationFragment extends ListFragment
 
   public void reload(Recipients recipients, long threadId) {
     this.recipients = recipients;
-    this.threadId   = threadId;
 
-    initializeListAdapter();
+    if (this.threadId != threadId) {
+      this.threadId = threadId;
+      initializeListAdapter();
+    }
   }
 
   public void scrollToBottom() {
@@ -232,8 +235,7 @@ public class ConversationFragment extends ListFragment
 
   private void handleForwardMessage(MessageRecord message) {
     Intent composeIntent = new Intent(getActivity(), ShareActivity.class);
-    composeIntent.putExtra(ConversationActivity.DRAFT_TEXT_EXTRA, message.getDisplayBody().toString());
-    composeIntent.putExtra(ShareActivity.MASTER_SECRET_EXTRA, masterSecret);
+    composeIntent.putExtra(Intent.EXTRA_TEXT, message.getDisplayBody().toString());
     startActivity(composeIntent);
   }
 

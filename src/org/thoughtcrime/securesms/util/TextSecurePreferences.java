@@ -3,9 +3,8 @@ package org.thoughtcrime.securesms.util;
 import android.content.Context;
 import android.os.Build;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.util.Log;
-
-import org.thoughtcrime.securesms.R;
 
 import java.io.IOException;
 
@@ -67,8 +66,26 @@ public class TextSecurePreferences {
   private static final String GCM_REGISTRATION_ID_PREF         = "pref_gcm_registration_id";
   private static final String GCM_REGISTRATION_ID_VERSION_PREF = "pref_gcm_registration_id_version";
   private static final String WEBSOCKET_REGISTERED_PREF        = "pref_websocket_registered";
+  private static final String RATING_LATER_PREF                = "pref_rating_later";
+  private static final String RATING_ENABLED_PREF              = "pref_rating_enabled";
 
   public  static final String REPEAT_ALERTS_PREF               = "pref_repeat_alerts";
+
+  public static long getRatingLaterTimestamp(Context context) {
+    return getLongPreference(context, RATING_LATER_PREF, 0);
+  }
+
+  public static void setRatingLaterTimestamp(Context context, long timestamp) {
+    setLongPreference(context, RATING_LATER_PREF, timestamp);
+  }
+
+  public static boolean isRatingEnabled(Context context) {
+    return getBooleanPreference(context, RATING_ENABLED_PREF, true);
+  }
+
+  public static void setRatingEnabled(Context context, boolean enabled) {
+    setBooleanPreference(context, RATING_ENABLED_PREF, enabled);
+  }
 
   public static boolean isWebsocketRegistered(Context context) {
     return getBooleanPreference(context, WEBSOCKET_REGISTERED_PREF, false);
@@ -378,7 +395,7 @@ public class TextSecurePreferences {
   }
 
   public static String getNotificationRingtone(Context context) {
-    return getStringPreference(context, RINGTONE_PREF, null);
+    return getStringPreference(context, RINGTONE_PREF, Settings.System.DEFAULT_NOTIFICATION_URI.toString());
   }
 
   public static boolean isNotificationVibrateEnabled(Context context) {

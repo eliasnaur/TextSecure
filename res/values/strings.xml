@@ -115,6 +115,7 @@
     <string name="ConversationActivity_error_leaving_group">Error leaving group...</string>
     <string name="ConversationActivity_mms_not_supported_title">MMS not supported</string>
     <string name="ConversationActivity_mms_not_supported_message">This message cannot be sent since your carrier doesn\'t support MMS.</string>
+    <string name="ConversationActivity_specify_recipient">Please choose a contact</string>
 
     <!-- ConversationFragment -->
     <string name="ConversationFragment_message_details">Message details</string>
@@ -277,6 +278,13 @@
     <string name="PassphrasePromptActivity_watermark_content_description">TextSecure icon</string>
     <string name="PassphrasePromptActivity_ok_button_content_description">Submit passphrase</string>
     <string name="PassphrasePromptActivity_invalid_passphrase_exclamation">Invalid passphrase!</string>
+
+    <!-- RatingManager -->
+    <string name="RatingManager_rate_this_app">Rate this app</string>
+    <string name="RatingManager_if_you_enjoy_using_this_app_please_take_a_moment">If you enjoy using this app, please take a moment to help us by rating it.</string>
+    <string name="RatingManager_rate_now">Rate now!</string>
+    <string name="RatingManager_no_thanks">No thanks</string>
+    <string name="RatingManager_later">Later</string>
 
     <!-- ReceiveKeyActivity -->
     <string name="ReceiveKeyActivity_the_signature_on_this_key_exchange_is_different">The
@@ -680,6 +688,7 @@
     <string name="AndroidManifest__media_preview">Media Preview</string>
     <string name="AndroidManifest__media_overview">All images</string>
     <string name="AndroidManifest__media_overview_named">All images with %1$s</string>
+    <string name="AndroidManifest__message_details">Message Details</string>
 
     <!-- arrays.xml -->
     <string name="arrays__import_export">Import / export</string>
