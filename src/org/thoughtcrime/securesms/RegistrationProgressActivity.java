@@ -305,7 +305,7 @@ public class RegistrationProgressActivity extends BaseActionBarActivity {
     this.connectivityFailureLayout.setVisibility(View.GONE);
     this.verificationFailureLayout.setVisibility(View.VISIBLE);
     this.verificationFailureButton.setText(String.format(getString(R.string.RegistrationProgressActivity_edit_s),
-                                                         PhoneNumberFormatter.formatNumberInternational(state.number)));
+                                                         /*PhoneNumberFormatter.formatNumberInternational(*/state.number/*)*/));
   }
 
   private void handleConnectivityError(RegistrationState state) {
@@ -313,7 +313,7 @@ public class RegistrationProgressActivity extends BaseActionBarActivity {
     this.verificationFailureLayout.setVisibility(View.GONE);
     this.connectivityFailureLayout.setVisibility(View.VISIBLE);
     this.connectivityFailureButton.setText(String.format(getString(R.string.RegistrationProgressActivity_edit_s),
-                                                         PhoneNumberFormatter.formatNumberInternational(state.number)));
+                                                         /*PhoneNumberFormatter.formatNumberInternational(*/state.number/*)*/));
   }
 
   private void handleMultiRegistrationError(RegistrationState state) {
