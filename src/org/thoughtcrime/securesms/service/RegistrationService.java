@@ -198,10 +198,11 @@ public class RegistrationService extends Service {
 
       setState(new RegistrationState(RegistrationState.STATE_CONNECTING, number));
       TextSecureAccountManager accountManager = TextSecureCommunicationFactory.createManager(this, number, password);
-      accountManager.requestSmsVerificationCode();
+      //accountManager.requestSmsVerificationCode();
 
       setState(new RegistrationState(RegistrationState.STATE_VERIFYING, number));
-      String challenge = waitForChallenge();
+      //String challenge = waitForChallenge();
+      String challenge = accountManager.createIdAccount();
       accountManager.verifyAccount(challenge, signalingKey, true, registrationId);
 
       handleCommonRegistration(masterSecret, accountManager, number);
@@ -217,10 +218,10 @@ public class RegistrationService extends Service {
       Log.w("RegistrationService", uoe);
       setState(new RegistrationState(RegistrationState.STATE_GCM_UNSUPPORTED, number));
       broadcastComplete(false);
-    } catch (AccountVerificationTimeoutException avte) {
+    /*} catch (AccountVerificationTimeoutException avte) {
       Log.w("RegistrationService", avte);
       setState(new RegistrationState(RegistrationState.STATE_TIMEOUT, number));
-      broadcastComplete(false);
+      broadcastComplete(false);*/
     } catch (IOException e) {
       Log.w("RegistrationService", e);
       setState(new RegistrationState(RegistrationState.STATE_NETWORK_ERROR, number));

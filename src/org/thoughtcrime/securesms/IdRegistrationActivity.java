@@ -84,7 +84,7 @@ public class IdRegistrationActivity extends BaseActionBarActivity {
       }
 
 	  Intent intent = new Intent(self, RegistrationProgressActivity.class);
-	  intent.putExtra("handle", handle.getText());
+	  intent.putExtra("e164number", handle.getText().toString());
 	  intent.putExtra("master_secret", masterSecret);
 	  startActivity(intent);
 	  finish();
