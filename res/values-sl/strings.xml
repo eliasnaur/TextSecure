@@ -25,7 +25,7 @@ Za ponovno uporabo potisnih sporočil se boste morali zopet prijaviti s svojo te
   <string name="ApplicationPreferencesActivity_sms_enabled">Sporočila SMS omogočena</string>
   <string name="ApplicationPreferencesActivity_touch_to_change_your_default_sms_app">Dotaknite se za spremembo privzete aplikacije za sporočila SMS</string>
   <string name="ApplicationPreferencesActivity_sms_disabled">Sporočila SMS izklopljena</string>
-  <string name="ApplicationPreferencesActivity_touch_to_make_textsecure_your_default_sms_app">Z dotikom nastavi TexteScure za privzeto aplikacijo SMS</string>
+  <string name="ApplicationPreferencesActivity_touch_to_make_textsecure_your_default_sms_app">Z dotikom nastavi TexteSecure za privzeto aplikacijo SMS</string>
   <string name="ApplicationPreferencesActivity_on">Omogočeno</string>
   <string name="ApplicationPreferencesActivity_On">Omogočeno</string>
   <string name="ApplicationPreferencesActivity_off">Izklopljeno</string>
@@ -133,7 +133,7 @@ preveriti ta stik.</string>
   <!--ShareActivity-->
   <string name="ShareActivity_share_with">Deli z</string>
   <!--ExportFragment-->
-  <string name="ExportFragment_export">Izvoz</string>
+  <string name="ExportFragment_export">Izvozi</string>
   <string name="ExportFragment_export_plaintext_to_sd_card">Izvozim na kartico SD v nešifrirani obliki?</string>
   <string name="ExportFragment_warning_this_will_export_the_plaintext_contents">Pozor, s tem boste izvozili vsebino svojih sporočil na kartico SD v nešifrirani obliki.</string>
   <string name="ExportFragment_cancel">Prekliči</string>
@@ -166,7 +166,7 @@ preveriti ta stik.</string>
   <string name="GroupMembersDialog_members">Člani...</string>
   <!--ImportExportActivity-->
   <string name="ImportExportActivity_import">Uvoz</string>
-  <string name="ImportExportActivity_export">Izvozi</string>
+  <string name="ImportExportActivity_export">Izvoz</string>
   <!--ImportFragment-->
   <string name="ImportFragment_import_system_sms_database">Uvozim iz sistemske zbirke sporočil SMS?</string>
   <string name="ImportFragment_this_will_import_messages_from_the_system">S tem boste uvozili sporočila iz sistemske zbirke SMS v aplikacijo TextSecure. Če ste predhodno že uvozili sporočila iz sistemske zbirke SMS, bodo ta sporočila v aplikaciji TextSecure podvojena.</string>
@@ -178,7 +178,7 @@ preveriti ta stik.</string>
   <string name="ImportFragment_import_plaintext_backup">Uvozim iz nešifrirane varnostne kopije?</string>
   <string name="ImportFragment_this_will_import_messages_from_a_plaintext_backup">S tem boste uvozili sporočila iz nešifrirane varnostne kopije. Če ste predhodno že uvozili sporočila iz iste varnostne kopije, bodo ta sporočila podvojena.</string>
   <string name="ImportFragment_importing">Uvažam</string>
-  <string name="ImportFragment_import_plaintext_backup_elipse">Uvoz iz nešifrirane varnostne kopije</string>
+  <string name="ImportFragment_import_plaintext_backup_elipse">Uvažam iz nešifrirane varnostne kopije...</string>
   <string name="ImportFragment_no_plaintext_backup_found">Ne najdem nobene nešifrirane varnostne kopije!</string>
   <string name="ImportFragment_error_importing_backup">Napaka pri uvozu iz varnostne kopije!</string>
   <string name="ImportFragment_import_complete">Uvoz dokončan!</string>
@@ -522,7 +522,7 @@ bila uspešna.</string>
   <string name="message_details_header__received">Prejeto:</string>
   <string name="message_details_header__via">Način:</string>
   <string name="message_details_header__to">Za:</string>
-  <string name="message_details_header__from">Od:</string>
+  <string name="message_details_header__from">Pošiljatelj:</string>
   <string name="message_details_header__with">Z:</string>
   <!--AndroidManifest.xml-->
   <string name="AndroidManifest__create_passphrase">Ustvari geslo</string>
@@ -536,6 +536,7 @@ bila uspešna.</string>
   <string name="AndroidManifest__media_preview">Ogled medija</string>
   <string name="AndroidManifest__media_overview">Vse slike</string>
   <string name="AndroidManifest__media_overview_named">Vse slike z %1$s</string>
+  <string name="AndroidManifest__message_details">Podrobnosti sporočila</string>
   <!--arrays.xml-->
   <string name="arrays__import_export">Uvoz/izvoz</string>
   <string name="arrays__my_identity_key">Moja identifikacija</string>
@@ -570,7 +571,7 @@ bila uspešna.</string>
   <string name="preferences__choose_identity">Izberi identiteto</string>
   <string name="preferences__choose_your_contact_entry_from_the_contacts_list">Na sezmanu stikov izberite svojo lastno vizitko.</string>
   <string name="preferences__change_passphrase">Zamenjaj geslo</string>
-  <string name="preferences__change_my_passphrase">Nastavitev novega gesla</string>
+  <string name="preferences__change_my_passphrase">Nastavi novo geslo</string>
   <string name="preferences__enable_passphrase">Vklop gesla</string>
   <string name="preferences__passphrase_summary">Geslo: %s</string>
   <string name="preferences__enable_local_encryption_of_messages_and_keys">Omogoči lokalno šifriranje sporočil na napravi</string>
@@ -626,7 +627,7 @@ bila uspešna.</string>
   <string name="preferences__override_system_mms_settings">Namesto sistemskih uveljavi spodnje MMS nastavitve nastavitve</string>
   <string name="preferences__mmsc_url">URL MMSC</string>
   <string name="preferences__mms_proxy_host">Posredniški strežnik za MMS</string>
-  <string name="preferences__mms_proxy_port">Vrata posredniškega strežnika za MMS</string>
+  <string name="preferences__mms_proxy_port">Vrata posredniškega strežnika MMS</string>
   <string name="preferences__mmsc_username">Uporabniško ime MMSC</string>
   <string name="preferences__mmsc_password">Geslo MMSC</string>
   <string name="preferences__sms_delivery_reports">Potrdila o dostavi SMS</string>
@@ -635,11 +636,11 @@ bila uspešna.</string>
   <string name="preferences__delete_old_messages">Izbris starih sporočil</string>
   <string name="preferences__conversation_length_limit">Omejitev dolžine pogovorov</string>
   <string name="preferences__trim_all_threads_now">Obreži vse pogovore zdaj</string>
-  <string name="preferences__scan_through_all_conversation_threads_and_enforce_conversation_length_limits">Preišče vse pogovore in uveljavi omejitve njihove dolžine</string>
-  <string name="preferences__light_theme">Svetla tema</string>
-  <string name="preferences__dark_theme">Temna tema</string>
+  <string name="preferences__scan_through_all_conversation_threads_and_enforce_conversation_length_limits">Preišči vse pogovore in uveljavi omejitve njihove dolžine</string>
+  <string name="preferences__light_theme">Svetla</string>
+  <string name="preferences__dark_theme">Temna</string>
   <string name="preferences__appearance">Izgled</string>
-  <string name="preferences__theme">Teme</string>
+  <string name="preferences__theme">Tema</string>
   <string name="preferences__theme_summary">Tema: %s</string>
   <string name="preferences__default">Privzeto</string>
   <string name="preferences__language">Jezik</string>
