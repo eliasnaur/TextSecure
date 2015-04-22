@@ -61,7 +61,7 @@ public class ApplicationContext extends Application implements DependencyInjecto
     initializeLogging();
     initializeDependencyInjection();
     initializeJobManager();
-    initializeGcmCheck();
+    //initializeGcmCheck();
   }
 
   @Override
