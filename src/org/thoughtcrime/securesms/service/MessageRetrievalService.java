@@ -73,6 +73,7 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
 
 	PowerManager powerManager = (PowerManager)getSystemService(Context.POWER_SERVICE);
 	wakeLock     = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MessageRetrieval");
+	wakeLock.setReferenceCounted(false);
 
     networkRequirementProvider.setListener(this);
 
@@ -91,11 +92,6 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
     return START_STICKY;
   }
 
-  private TextSecureMessagePipe createPipe() {
-	  TextSecureMessagePipe thePipe = receiver.createMessagePipe();
-	  return thePipe;
-  }
-
   @Override
   public void run() {
 	  wakeLock.acquire();
@@ -110,15 +106,20 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
   private void doRun() {
     while (!stop.get()) {
       Log.w(TAG, "Waiting for websocket state change....");
-      waitForConnectionNecessary();
+	  wakeLock.release();
+	  try {
+	      waitForConnectionNecessary();
+	  } finally {
+	  	wakeLock.acquire();
+	  }
+	  if (stop.get())
+		  continue;
 
       Log.w(TAG, "Making websocket connection....");
-	  TextSecureMessagePipe thePipe = createPipe();
+	  TextSecureMessagePipe thePipe = receiver.createMessagePipe();
 	  synchronized (this) {
 	      pipe = thePipe;
 	  }
-	  if (thePipe == null)
-		  continue;
 
       try {
         while (isConnectionNecessary() && !stop.get()) {
@@ -283,6 +284,9 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
   @Override public void onDestroy() {
 	  super.onDestroy();
 	  stop.set(true);
+	  synchronized (this) {
+		  notifyAll();
+	  }
 	  /*try {
 		  thread.join();
 	  } catch (InterruptedException e) {
