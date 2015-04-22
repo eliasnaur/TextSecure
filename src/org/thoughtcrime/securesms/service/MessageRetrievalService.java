@@ -192,7 +192,7 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
 		  .setSmallIcon(org.thoughtcrime.securesms.R.drawable.icon)
 		  .setPriority(Notification.PRIORITY_LOW)
 		  .setOngoing(true)
-		  .setContentText(getString(org.thoughtcrime.securesms.R.string.foreground_websocket_title))
+		  .setContentTitle(getString(org.thoughtcrime.securesms.R.string.foreground_websocket_title))
 		  .setContentText(getString(org.thoughtcrime.securesms.R.string.foreground_websocket_text))
 		  .getNotification();
 	  startForeground(FOREGROUND_NOTIFICATION_ID, notification);
