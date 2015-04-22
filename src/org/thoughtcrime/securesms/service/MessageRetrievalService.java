@@ -1,6 +1,8 @@
 package org.thoughtcrime.securesms.service;
 
+import android.app.AlarmManager;
 import android.app.Notification;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -21,6 +23,7 @@ import org.whispersystems.textsecure.api.TextSecureMessageReceiver;
 import org.whispersystems.textsecure.api.messages.TextSecureEnvelope;
 
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.content.WakefulBroadcastReceiver;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -34,6 +37,7 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
 
   private static final String TAG = MessageRetrievalService.class.getSimpleName();
 
+  public static final  String ACTION_KEEPALIVE         = "KEEPALIVE";
   public static final  String ACTION_ACTIVITY_STARTED  = "ACTIVITY_STARTED";
   public static final  String ACTION_ACTIVITY_FINISHED = "ACTIVITY_FINISHED";
   public static final  String ACTION_PUSH_RECEIVED     = "PUSH_RECEIVED";
@@ -67,6 +71,7 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
     if      (ACTION_ACTIVITY_STARTED.equals(intent.getAction()))  incrementActive();
     else if (ACTION_ACTIVITY_FINISHED.equals(intent.getAction())) decrementActive();
     else if (ACTION_PUSH_RECEIVED.equals(intent.getAction()))     incrementPushReceived(intent);
+    else if (ACTION_KEEPALIVE.equals(intent.getAction()))         keepAlive(intent);
 
     return START_STICKY;
   }
@@ -192,9 +197,25 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
 		  .setSmallIcon(org.thoughtcrime.securesms.R.drawable.icon)
 		  .setPriority(Notification.PRIORITY_LOW)
 		  .setOngoing(true)
+		  .setWhen(0)
 		  .setContentTitle(getString(org.thoughtcrime.securesms.R.string.foreground_websocket_title))
 		  .setContentText(getString(org.thoughtcrime.securesms.R.string.foreground_websocket_text))
 		  .getNotification();
 	  startForeground(FOREGROUND_NOTIFICATION_ID, notification);
+  }
+
+  public static void startKeepAliveAlarm(Context ctx) {
+	  AlarmManager alarmMgr = (AlarmManager)ctx.getSystemService(Context.ALARM_SERVICE);
+	  PendingIntent intent = PendingIntent.getBroadcast(ctx, 0, new Intent(ctx, KeepAliveReceiver.class), 0);
+	  long duration = REQUEST_TIMEOUT_MINUTES*60*1000;
+	  alarmMgr.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, duration, duration, intent);
+  }
+
+  private void keepAlive(Intent intent) {
+	  try {
+		  Log.i(TAG, "Keep alive!");
+	  } finally {
+		  WakefulBroadcastReceiver.completeWakefulIntent(intent);
+	  }
   }
 }
