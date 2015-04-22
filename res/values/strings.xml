@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="foreground_websocket_title">TextSecure status</string>
+    <string name="foreground_websocket_text">TextSecure is active and connected</string>
     <string name="app_name">Hoenir TextSecure</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>

@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.service;
 
+import android.app.Notification;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -19,6 +20,8 @@ import org.whispersystems.textsecure.api.TextSecureMessagePipe;
 import org.whispersystems.textsecure.api.TextSecureMessageReceiver;
 import org.whispersystems.textsecure.api.messages.TextSecureEnvelope;
 
+import android.support.v4.app.NotificationCompat;
+
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -27,6 +30,7 @@ import java.util.concurrent.TimeoutException;
 import javax.inject.Inject;
 
 public class MessageRetrievalService extends Service implements Runnable, InjectableType, RequirementListener {
+	private final static int FOREGROUND_NOTIFICATION_ID = 1234;
 
   private static final String TAG = MessageRetrievalService.class.getSimpleName();
 
@@ -47,6 +51,7 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
   @Override
   public void onCreate() {
     super.onCreate();
+	registerForeground();
     ApplicationContext.getInstance(this).injectDependencies(this);
 
     networkRequirement         = new NetworkRequirement(this);
@@ -150,7 +155,7 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
                              networkRequirement.isPresent(), activeActivities, pushPending.size()));
 
     return TextSecurePreferences.isWebsocketRegistered(this) &&
-           (activeActivities > 0 || !pushPending.isEmpty())  &&
+           (true/*activeActivities > 0*/ || !pushPending.isEmpty())  &&
            networkRequirement.isPresent();
   }
 
@@ -180,5 +185,16 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
     Intent intent = new Intent(activity, MessageRetrievalService.class);
     intent.setAction(MessageRetrievalService.ACTION_ACTIVITY_FINISHED);
     activity.startService(intent);
+  }
+
+  private void registerForeground() {
+	  Notification notification = new NotificationCompat.Builder(this)
+		  .setSmallIcon(org.thoughtcrime.securesms.R.drawable.icon)
+		  .setPriority(Notification.PRIORITY_LOW)
+		  .setOngoing(true)
+		  .setContentText(getString(org.thoughtcrime.securesms.R.string.foreground_websocket_title))
+		  .setContentText(getString(org.thoughtcrime.securesms.R.string.foreground_websocket_text))
+		  .getNotification();
+	  startForeground(FOREGROUND_NOTIFICATION_ID, notification);
   }
 }
