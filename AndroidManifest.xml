@@ -248,7 +248,13 @@
         </intent-filter>
     </service>
 
-	<receiver android:name=".KeepAliveReceiver"></receiver>
+	<receiver android:name=".service.KeepAliveReceiver">
+	</receiver>
+	<receiver android:name=".service.BootCompletedReceiver">
+		<intent-filter>
+			<action android:name="android.intent.action.BOOT_COMPLETED"/>
+		</intent-filter>
+	</receiver>
 	<!--<receiver android:name=".gcm.GcmBroadcastReceiver" android:permission="com.google.android.c2dm.permission.SEND" >
         <intent-filter>
             <action android:name="com.google.android.c2dm.intent.RECEIVE" />
