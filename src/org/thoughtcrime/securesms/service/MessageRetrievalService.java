@@ -46,7 +46,8 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
   public static final  String ACTION_ACTIVITY_STARTED  = "ACTIVITY_STARTED";
   public static final  String ACTION_ACTIVITY_FINISHED = "ACTIVITY_FINISHED";
   public static final  String ACTION_PUSH_RECEIVED     = "PUSH_RECEIVED";
-  private static final int   REQUEST_TIMEOUT_MINUTES   = 15;
+
+  private static final int   REQUEST_TIMEOUT_MINUTES          = 15;
   private static final int   REQUEST_TIMEOUT_JITTER_MINUTES   = 2;
 
   private NetworkRequirement         networkRequirement;
@@ -325,6 +326,7 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
 
   @Override public void onDestroy() {
 	  super.onDestroy();
+	  Log.w(TAG, "onDestroy!");
 	  stop.set(true);
 	  synchronized (this) {
 		  notifyAll();
