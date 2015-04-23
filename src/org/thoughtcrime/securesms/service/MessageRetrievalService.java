@@ -292,10 +292,10 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
   }
 
   public static void startKeepAliveAlarm(Context ctx) {
-	  /*AlarmManager alarmMgr = (AlarmManager)ctx.getSystemService(Context.ALARM_SERVICE);
+	  AlarmManager alarmMgr = (AlarmManager)ctx.getSystemService(Context.ALARM_SERVICE);
 	  PendingIntent intent = PendingIntent.getBroadcast(ctx, 0, new Intent(ctx, KeepAliveReceiver.class), 0);
 	  long duration = REQUEST_TIMEOUT_MINUTES*60*1000;
-	  alarmMgr.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, 0, duration, intent);*/
+	  alarmMgr.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, 0, duration, intent);
   }
 
   private void keepAlive(Intent intent) {
