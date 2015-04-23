@@ -2,6 +2,7 @@
 <resources>
     <string name="foreground_websocket_title">TextSecure status</string>
     <string name="foreground_websocket_text">TextSecure is running</string>
+    <string name="foreground_websocket_text_idle">TextSecure is idle</string>
     <string name="app_name">Hoenir TextSecure</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>

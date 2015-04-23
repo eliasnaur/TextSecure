@@ -46,7 +46,8 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
   public static final  String ACTION_ACTIVITY_STARTED  = "ACTIVITY_STARTED";
   public static final  String ACTION_ACTIVITY_FINISHED = "ACTIVITY_FINISHED";
   public static final  String ACTION_PUSH_RECEIVED     = "PUSH_RECEIVED";
-  private static final long   REQUEST_TIMEOUT_MINUTES  = 1;
+  private static final int   REQUEST_TIMEOUT_MINUTES   = 15;
+  private static final int   REQUEST_TIMEOUT_JITTER_MINUTES   = 2;
 
   private NetworkRequirement         networkRequirement;
   private NetworkRequirementProvider networkRequirementProvider;
@@ -55,6 +56,7 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
   public TextSecureMessageReceiver receiver;
   private TextSecureMessagePipe pipe;
   private PowerManager.WakeLock wakeLock;
+  private boolean waitingForReconnect;
 
   private int          activeActivities = 0;
   private List<Intent> pushPending      = new LinkedList<>();
@@ -65,7 +67,6 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
   @Override
   public void onCreate() {
     super.onCreate();
-	registerForeground();
     ApplicationContext.getInstance(this).injectDependencies(this);
 
     networkRequirement         = new NetworkRequirement(this);
@@ -77,6 +78,7 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
 
     networkRequirementProvider.setListener(this);
 
+	registerForeground();
     thread = new Thread(this, "MessageRetrievalService");
 	thread.start();
   }
@@ -94,43 +96,75 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
 
   @Override
   public void run() {
-	  wakeLock.acquire();
+	  acquireWakeLock();
 	  try {
 		  doRun();
 	  } finally {
     	  Log.w(TAG, "Exiting ws thread...");
-		  wakeLock.release();
+		  releaseWakeLock();
+	  }
+  }
+
+  private synchronized void releaseWakeLock() {
+	  Log.i(TAG, "releasing wakelock");
+	  wakeLock.release();
+	  registerForeground();
+  }
+
+  private synchronized void acquireWakeLock() {
+	  Log.i(TAG, "acquiring wakelock");
+	  wakeLock.acquire();
+	  registerForeground();
+  }
+
+  private synchronized void releaseAndWait() {
+	  releaseWakeLock();
+	  try {
+		  Log.w(TAG, "Waiting for websocket state change....");
+		  waitForConnectionNecessary();
+	  } finally {
+		  acquireWakeLock();
 	  }
   }
 
   private void doRun() {
+	int attempt = 0;
     while (!stop.get()) {
-      Log.w(TAG, "Waiting for websocket state change....");
-	  wakeLock.release();
-	  try {
-	      waitForConnectionNecessary();
-	  } finally {
-	  	wakeLock.acquire();
-	  }
+		if (!isConnectionNecessary()) {
+			releaseAndWait();
+		}
 	  if (stop.get())
 		  continue;
 
       Log.w(TAG, "Making websocket connection....");
-	  TextSecureMessagePipe thePipe = receiver.createMessagePipe();
-	  synchronized (this) {
-	      pipe = thePipe;
+	  TextSecureMessagePipe thePipe = null;
+	  try {
+		  thePipe = receiver.createMessagePipe((REQUEST_TIMEOUT_MINUTES + REQUEST_TIMEOUT_JITTER_MINUTES)*60);
+	  } catch (IOException e) {
+		  Log.w(TAG, "Connect error: " + e.getMessage());
 	  }
+	  synchronized (this) {
+		  pipe = thePipe;
+	  }
+
+	  if (thePipe == null) {
+		  long waitMillis = Math.min(++attempt * 1000, TimeUnit.MINUTES.toMillis(REQUEST_TIMEOUT_MINUTES));
+      	  Log.w(TAG, "Setting alarm for reconnect in " + waitMillis);
+		  waitingForReconnect = true;
+		  fireKeepAliveIn(MessageRetrievalService.this, waitMillis);
+		  releaseAndWait();
+		  continue;
+	  }
+	  attempt = 0;
 
       try {
         while (isConnectionNecessary() && !stop.get()) {
           try {
             Log.w(TAG, "Reading message...");
-            thePipe.read(REQUEST_TIMEOUT_MINUTES, TimeUnit.MINUTES,
+            thePipe.read(Integer.MAX_VALUE, TimeUnit.MILLISECONDS,
                       new TextSecureMessagePipe.MessagePipeCallback() {
                         @Override
                         public void onMessage(TextSecureEnvelope envelope) {
-							if (stop.get())
-								return;
                           Log.w(TAG, "Retrieved envelope! " + envelope.getSource());
 
                           PushContentReceiveJob receiveJob = new PushContentReceiveJob(MessageRetrievalService.this);
@@ -139,12 +173,10 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
                           decrementPushReceived();
                         }
 						@Override public void sleep() {
-							Log.i(TAG, "releasing wakelock");
-							wakeLock.release();
+							releaseWakeLock();
 						}
 						@Override public void wakeup() {
-							Log.i(TAG, "acquiring wakelock");
-							wakeLock.acquire();
+							acquireWakeLock();
 						}
                       });
           } catch (TimeoutException e) {
@@ -202,12 +234,12 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
   }
 
   private synchronized boolean isConnectionNecessary() {
-    Log.w(TAG, String.format("Network requirement: %s, active activities: %s, push pending: %s",
-                             networkRequirement.isPresent(), activeActivities, pushPending.size()));
+    Log.w(TAG, String.format("Network requirement: %s, active activities: %s, push pending: %s, waiting for reconnect: %s",
+                             networkRequirement.isPresent(), activeActivities, pushPending.size(), waitingForReconnect));
 
     return TextSecurePreferences.isWebsocketRegistered(this) &&
            (true/*activeActivities > 0*/ || !pushPending.isEmpty())  &&
-           networkRequirement.isPresent();
+           networkRequirement.isPresent() && !waitingForReconnect;
   }
 
   private synchronized void waitForConnectionNecessary() {
@@ -238,23 +270,31 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
     activity.startService(intent);
   }
 
-  private void registerForeground() {
+  private synchronized void registerForeground() {
 	  Notification notification = new NotificationCompat.Builder(this)
 		  .setSmallIcon(org.thoughtcrime.securesms.R.drawable.icon)
 		  .setPriority(Notification.PRIORITY_LOW)
 		  .setOngoing(true)
 		  .setWhen(0)
 		  .setContentTitle(getString(org.thoughtcrime.securesms.R.string.foreground_websocket_title))
-		  .setContentText(getString(org.thoughtcrime.securesms.R.string.foreground_websocket_text))
+		  .setContentText(wakeLock.isHeld() ?
+				  getString(org.thoughtcrime.securesms.R.string.foreground_websocket_text)
+				  : getString(org.thoughtcrime.securesms.R.string.foreground_websocket_text_idle))
 		  .getNotification();
 	  startForeground(FOREGROUND_NOTIFICATION_ID, notification);
   }
 
-  public static void startKeepAliveAlarm(Context ctx) {
+  public static void fireKeepAliveIn(Context ctx, long millis) {
 	  AlarmManager alarmMgr = (AlarmManager)ctx.getSystemService(Context.ALARM_SERVICE);
 	  PendingIntent intent = PendingIntent.getBroadcast(ctx, 0, new Intent(ctx, KeepAliveReceiver.class), 0);
+	  alarmMgr.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, millis, intent);
+  }
+
+  public static void startKeepAliveAlarm(Context ctx) {
+	  /*AlarmManager alarmMgr = (AlarmManager)ctx.getSystemService(Context.ALARM_SERVICE);
+	  PendingIntent intent = PendingIntent.getBroadcast(ctx, 0, new Intent(ctx, KeepAliveReceiver.class), 0);
 	  long duration = REQUEST_TIMEOUT_MINUTES*60*1000;
-	  alarmMgr.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, 0, duration, intent);
+	  alarmMgr.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, 0, duration, intent);*/
   }
 
   private void keepAlive(Intent intent) {
@@ -264,10 +304,12 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
 					.create()) {
 			@Override public void onRun() throws Exception {
 				synchronized (MessageRetrievalService.this) {
+					Log.i(TAG, "Keep alive prod");
+					waitingForReconnect = false;
 					if (pipe != null) {
 						pipe.sendKeepAlive();
-						Log.i(TAG, "Sent keep alive");
 					}
+					MessageRetrievalService.this.notifyAll();
 				}
 			}
 			@Override public void onCanceled() {}
