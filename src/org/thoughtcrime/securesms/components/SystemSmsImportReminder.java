@@ -46,6 +46,6 @@ public class SystemSmsImportReminder extends Reminder {
   }
 
   public static boolean isEligible(Context context) {
-    return !ApplicationMigrationService.isDatabaseImported(context);
+    return false;//!ApplicationMigrationService.isDatabaseImported(context);
   }
 }
