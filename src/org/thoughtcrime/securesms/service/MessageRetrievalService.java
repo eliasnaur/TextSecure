@@ -12,6 +12,7 @@ import android.os.SystemClock;
 import android.util.Log;
 
 import org.thoughtcrime.securesms.ApplicationContext;
+import org.thoughtcrime.securesms.ConversationListActivity;
 import org.thoughtcrime.securesms.dependencies.InjectableType;
 import org.thoughtcrime.securesms.gcm.GcmBroadcastReceiver;
 import org.thoughtcrime.securesms.jobs.PushContentReceiveJob;
@@ -275,11 +276,14 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
   }
 
   private synchronized void registerForeground() {
+	  Intent launch = new Intent(this, ConversationListActivity.class);
+	  PendingIntent intent = PendingIntent.getActivity(this, 0, launch, PendingIntent.FLAG_UPDATE_CURRENT);
 	  Notification notification = new NotificationCompat.Builder(this)
 		  .setSmallIcon(org.thoughtcrime.securesms.R.drawable.icon)
-		  .setPriority(Notification.PRIORITY_LOW)
+		  .setPriority(Notification.PRIORITY_MIN)
 		  .setOngoing(true)
 		  .setWhen(0)
+		  .setContentIntent(intent)
 		  .setContentTitle(getString(org.thoughtcrime.securesms.R.string.foreground_websocket_title))
 		  .setContentText(wakeLock.isHeld() ?
 				  getString(org.thoughtcrime.securesms.R.string.foreground_websocket_text)
@@ -295,7 +299,7 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
 	  ctx = ctx.getApplicationContext();
 	  AlarmManager alarmMgr = (AlarmManager)ctx.getSystemService(Context.ALARM_SERVICE);
 	  Intent bInt = new Intent(ctx, KeepAliveReceiver.class);
-	  PendingIntent intent = PendingIntent.getBroadcast(ctx, 1, bInt, PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_UPDATE_CURRENT);
+	  PendingIntent intent = PendingIntent.getBroadcast(ctx, 0, bInt, PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_UPDATE_CURRENT);
 	  alarmMgr.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + millis, intent);
   }
 
