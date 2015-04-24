@@ -50,7 +50,7 @@ public class ApplicationPreferencesActivity extends PassphraseRequiredActionBarA
 {
   private static final String TAG = ApplicationPreferencesActivity.class.getSimpleName();
 
-  private static final String PREFERENCE_CATEGORY_SMS_MMS        = "preference_category_sms_mms";
+  //private static final String PREFERENCE_CATEGORY_SMS_MMS        = "preference_category_sms_mms";
   private static final String PREFERENCE_CATEGORY_NOTIFICATIONS  = "preference_category_notifications";
   private static final String PREFERENCE_CATEGORY_APP_PROTECTION = "preference_category_app_protection";
   private static final String PREFERENCE_CATEGORY_APPEARANCE     = "preference_category_appearance";
@@ -121,8 +121,8 @@ public class ApplicationPreferencesActivity extends PassphraseRequiredActionBarA
       addPreferencesFromResource(R.xml.preferences);
 
       MasterSecret masterSecret = getArguments().getParcelable("master_secret");
-      this.findPreference(PREFERENCE_CATEGORY_SMS_MMS)
-        .setOnPreferenceClickListener(new CategoryClickListener(masterSecret, PREFERENCE_CATEGORY_SMS_MMS));
+      /*this.findPreference(PREFERENCE_CATEGORY_SMS_MMS)
+        .setOnPreferenceClickListener(new CategoryClickListener(masterSecret, PREFERENCE_CATEGORY_SMS_MMS));*/
       this.findPreference(PREFERENCE_CATEGORY_NOTIFICATIONS)
         .setOnPreferenceClickListener(new CategoryClickListener(masterSecret, PREFERENCE_CATEGORY_NOTIFICATIONS));
       this.findPreference(PREFERENCE_CATEGORY_APP_PROTECTION)
@@ -143,8 +143,8 @@ public class ApplicationPreferencesActivity extends PassphraseRequiredActionBarA
     }
 
     private void setCategorySummaries() {
-      this.findPreference(PREFERENCE_CATEGORY_SMS_MMS)
-          .setSummary(SmsMmsPreferenceFragment.getSummary(getActivity()));
+      /*this.findPreference(PREFERENCE_CATEGORY_SMS_MMS)
+          .setSummary(SmsMmsPreferenceFragment.getSummary(getActivity()));*/
       this.findPreference(PREFERENCE_CATEGORY_NOTIFICATIONS)
           .setSummary(NotificationsPreferenceFragment.getSummary(getActivity()));
       this.findPreference(PREFERENCE_CATEGORY_APP_PROTECTION)
@@ -169,9 +169,9 @@ public class ApplicationPreferencesActivity extends PassphraseRequiredActionBarA
         Fragment fragment;
 
         switch (category) {
-        case PREFERENCE_CATEGORY_SMS_MMS:
+        /*case PREFERENCE_CATEGORY_SMS_MMS:
           fragment = new SmsMmsPreferenceFragment();
-          break;
+          break;*/
         case PREFERENCE_CATEGORY_NOTIFICATIONS:
           fragment = new NotificationsPreferenceFragment();
           break;
