@@ -18,6 +18,7 @@ package org.thoughtcrime.securesms;
 
 import android.app.Application;
 import android.content.Context;
+import android.content.Intent;
 
 import org.thoughtcrime.securesms.crypto.PRNGFixes;
 import org.thoughtcrime.securesms.dependencies.AxolotlStorageModule;
@@ -111,6 +112,7 @@ public class ApplicationContext extends Application implements DependencyInjecto
   }
 
   private void initializeKeepAlive() {
-	  MessageRetrievalService.startKeepAliveAlarm(this);
+	  Intent service = new Intent(MessageRetrievalService.ACTION_KEEPALIVE, null, this, MessageRetrievalService.class);
+	  startService(service);
   }
 }

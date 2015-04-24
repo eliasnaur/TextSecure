@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.os.SystemClock;
 import android.util.Log;
 
 import org.thoughtcrime.securesms.ApplicationContext;
@@ -68,6 +69,7 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
   @Override
   public void onCreate() {
     super.onCreate();
+	Log.w(TAG, "onCreate!");
     ApplicationContext.getInstance(this).injectDependencies(this);
 
     networkRequirement         = new NetworkRequirement(this);
@@ -161,6 +163,7 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
       try {
         while (isConnectionNecessary() && !stop.get()) {
           try {
+	  		scheduleKeepAlive(MessageRetrievalService.this);
             Log.w(TAG, "Reading message...");
             thePipe.read(Integer.MAX_VALUE, TimeUnit.MILLISECONDS,
                       new TextSecureMessagePipe.MessagePipeCallback() {
@@ -285,33 +288,40 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
 	  startForeground(FOREGROUND_NOTIFICATION_ID, notification);
   }
 
-  public static void fireKeepAliveIn(Context ctx, long millis) {
+  private static void fireKeepAliveIn(Context ctx, long millis) {
+	  if (!TextSecurePreferences.isWebsocketRegistered(ctx))
+		  return;
+	  Log.i(TAG, "setting keep alive timer in " + millis);
+	  ctx = ctx.getApplicationContext();
 	  AlarmManager alarmMgr = (AlarmManager)ctx.getSystemService(Context.ALARM_SERVICE);
-	  PendingIntent intent = PendingIntent.getBroadcast(ctx, 0, new Intent(ctx, KeepAliveReceiver.class), 0);
-	  alarmMgr.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, millis, intent);
+	  Intent bInt = new Intent(ctx, KeepAliveReceiver.class);
+	  PendingIntent intent = PendingIntent.getBroadcast(ctx, 1, bInt, PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_UPDATE_CURRENT);
+	  alarmMgr.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + millis, intent);
   }
 
-  public static void startKeepAliveAlarm(Context ctx) {
-	  AlarmManager alarmMgr = (AlarmManager)ctx.getSystemService(Context.ALARM_SERVICE);
-	  PendingIntent intent = PendingIntent.getBroadcast(ctx, 0, new Intent(ctx, KeepAliveReceiver.class), 0);
-	  long duration = REQUEST_TIMEOUT_MINUTES*60*1000;
-	  alarmMgr.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, 0, duration, intent);
+  private static void scheduleKeepAlive(Context ctx) {
+	  double rand = 0.9 + Math.random()*.1;
+	  int millis = (int)(REQUEST_TIMEOUT_MINUTES*60*1000*rand);
+	  fireKeepAliveIn(ctx, millis);
   }
 
   private void keepAlive(Intent intent) {
 	  try {
+	  	Log.i(TAG, "Keep alive prod");
 		ApplicationContext.getInstance(this).getJobManager().add(new Job(JobParameters.newBuilder()
 					.withWakeLock(true)
 					.create()) {
 			@Override public void onRun() throws Exception {
+				TextSecureMessagePipe thePipe;
 				synchronized (MessageRetrievalService.this) {
-					Log.i(TAG, "Keep alive prod");
 					waitingForReconnect = false;
-					if (pipe != null) {
-						pipe.sendKeepAlive();
-					}
+					thePipe = pipe;
 					MessageRetrievalService.this.notifyAll();
 				}
+				if (thePipe != null) {
+					thePipe.sendKeepAlive();
+				}
+				scheduleKeepAlive(MessageRetrievalService.this);
 			}
 			@Override public void onCanceled() {}
 			@Override public void onAdded() {}
