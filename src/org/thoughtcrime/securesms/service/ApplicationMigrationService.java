@@ -30,8 +30,8 @@ public class ApplicationMigrationService extends Service
     implements SmsMigrator.SmsMigrationProgressListener
 {
   private static final String TAG               = ApplicationMigrationService.class.getSimpleName();
-  public  static final String MIGRATE_DATABASE  = "org.thoughtcrime.securesms.ApplicationMigration.MIGRATE_DATABSE";
-  public  static final String COMPLETED_ACTION  = "org.thoughtcrime.securesms.ApplicationMigrationService.COMPLETED";
+  public  static final String MIGRATE_DATABASE  = "com.hoenirphone.securesms.ApplicationMigration.MIGRATE_DATABSE";
+  public  static final String COMPLETED_ACTION  = "com.hoenirphone.securesms.ApplicationMigrationService.COMPLETED";
   private static final String PREFERENCES_NAME  = "SecureSMS";
   private static final String DATABASE_MIGRATED = "migrated";
 

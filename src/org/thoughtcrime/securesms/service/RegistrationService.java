@@ -60,14 +60,14 @@ import java.util.concurrent.Executors;
 
 public class RegistrationService extends Service {
 
-  public static final String REGISTER_NUMBER_ACTION = "org.thoughtcrime.securesms.RegistrationService.REGISTER_NUMBER";
-  public static final String VOICE_REQUESTED_ACTION = "org.thoughtcrime.securesms.RegistrationService.VOICE_REQUESTED";
-  public static final String VOICE_REGISTER_ACTION  = "org.thoughtcrime.securesms.RegistrationService.VOICE_REGISTER";
+  public static final String REGISTER_NUMBER_ACTION = "com.hoenirphone.securesms.RegistrationService.REGISTER_NUMBER";
+  public static final String VOICE_REQUESTED_ACTION = "com.hoenirphone.securesms.RegistrationService.VOICE_REQUESTED";
+  public static final String VOICE_REGISTER_ACTION  = "com.hoenirphone.securesms.RegistrationService.VOICE_REGISTER";
 
-  public static final String NOTIFICATION_TITLE     = "org.thoughtcrime.securesms.NOTIFICATION_TITLE";
-  public static final String NOTIFICATION_TEXT      = "org.thoughtcrime.securesms.NOTIFICATION_TEXT";
-  public static final String CHALLENGE_EVENT        = "org.thoughtcrime.securesms.CHALLENGE_EVENT";
-  public static final String REGISTRATION_EVENT     = "org.thoughtcrime.securesms.REGISTRATION_EVENT";
+  public static final String NOTIFICATION_TITLE     = "com.hoenirphone.securesms.NOTIFICATION_TITLE";
+  public static final String NOTIFICATION_TEXT      = "com.hoenirphone.securesms.NOTIFICATION_TEXT";
+  public static final String CHALLENGE_EVENT        = "com.hoenirphone.securesms.CHALLENGE_EVENT";
+  public static final String REGISTRATION_EVENT     = "com.hoenirphone.securesms.REGISTRATION_EVENT";
 
   public static final String CHALLENGE_EXTRA        = "CAAChallenge";
 
@@ -249,7 +249,7 @@ public class RegistrationService extends Service {
 
     setState(new RegistrationState(RegistrationState.STATE_GCM_REGISTERING, number));
 
-	String gcmRegistrationId = null;
+	/*String gcmRegistrationId = null;
 	try {
 		gcmRegistrationId = GoogleCloudMessaging.getInstance(this).register(GcmRefreshJob.REGISTRATION_ID);
 	} catch (IOException e) {
@@ -259,7 +259,7 @@ public class RegistrationService extends Service {
 		accountManager.setGcmId(Optional.of(gcmRegistrationId));
 
 		TextSecurePreferences.setGcmRegistrationId(this, gcmRegistrationId);
-	}
+	}*/
     TextSecurePreferences.setWebsocketRegistered(this, true);
 
     DatabaseFactory.getIdentityDatabase(this).saveIdentity(masterSecret, self.getRecipientId(), identityKey.getPublicKey());

@@ -12,7 +12,7 @@ import org.thoughtcrime.securesms.database.DatabaseFactory;
 
 public class MarkReadReceiver extends BroadcastReceiver {
 
-  public static final String CLEAR_ACTION = "org.thoughtcrime.securesms.notifications.CLEAR";
+  public static final String CLEAR_ACTION = "com.hoenirphone.securesms.notifications.CLEAR";
 
   @Override
   public void onReceive(final Context context, Intent intent) {

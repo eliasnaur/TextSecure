@@ -28,7 +28,7 @@ import java.util.List;
 
 public class GroupDatabase extends Database {
 
-  public static final String DATABASE_UPDATE_ACTION = "org.thoughtcrime.securesms.database.GroupDatabase.UPDATE";
+  public static final String DATABASE_UPDATE_ACTION = "com.hoenirphone.securesms.database.GroupDatabase.UPDATE";
 
   private static final String TAG = GroupDatabase.class.getSimpleName();
 

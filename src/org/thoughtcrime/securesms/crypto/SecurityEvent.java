@@ -13,7 +13,7 @@ import org.thoughtcrime.securesms.service.KeyCachingService;
 
 public class SecurityEvent {
 
-  public static final String SECURITY_UPDATE_EVENT = "org.thoughtcrime.securesms.KEY_EXCHANGE_UPDATE";
+  public static final String SECURITY_UPDATE_EVENT = "com.hoenirphone.securesms.KEY_EXCHANGE_UPDATE";
 
   public static void broadcastSecurityUpdateEvent(Context context) {
     broadcastSecurityUpdateEvent(context, -2);
