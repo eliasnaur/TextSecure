@@ -48,7 +48,7 @@ public class AdvancedPreferenceFragment extends PreferenceFragment {
     masterSecret = getArguments().getParcelable("master_secret");
     addPreferencesFromResource(R.xml.preferences_advanced);
 
-    initializePushMessagingToggle();
+    //initializePushMessagingToggle();
     initializeIdentitySelection();
 
     this.findPreference(SUBMIT_DEBUG_LOG_PREF)

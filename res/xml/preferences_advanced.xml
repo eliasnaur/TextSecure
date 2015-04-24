@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <CheckBoxPreference android:defaultValue="false"
+	<!--<CheckBoxPreference android:defaultValue="false"
                         android:key="pref_toggle_push_messaging"
                         android:title="@string/preferences__textsecure_messages"
-                        android:summary="@string/preferences__use_the_data_channel_for_communication_with_other_textsecure_users"/>
+						android:summary="@string/preferences__use_the_data_channel_for_communication_with_other_textsecure_users"/>-->
 
     <CheckBoxPreference android:defaultValue="false"
                         android:key="pref_enter_sends"
