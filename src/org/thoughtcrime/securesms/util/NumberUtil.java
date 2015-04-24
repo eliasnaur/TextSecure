@@ -31,11 +31,11 @@ public class NumberUtil {
   }
 
   public static boolean isValidSmsOrEmail(String number) {
-    return PhoneNumberUtils.isWellFormedSmsAddress(number) || isValidEmail(number);
+    return true/*PhoneNumberUtils.isWellFormedSmsAddress(number)*/ || isValidEmail(number);
   }
 
   public static boolean isValidSmsOrEmailOrGroup(String number) {
-    return PhoneNumberUtils.isWellFormedSmsAddress(number) ||
+    return true/*PhoneNumberUtils.isWellFormedSmsAddress(number)*/ ||
         isValidEmail(number) ||
         GroupUtil.isEncodedGroup(number);
   }
