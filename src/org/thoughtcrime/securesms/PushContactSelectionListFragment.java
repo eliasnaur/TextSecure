@@ -17,11 +17,14 @@
 package org.thoughtcrime.securesms;
 
 
+import android.content.Context;
 import android.database.Cursor;
+import android.database.MatrixCursor;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.widget.CursorAdapter;
 import android.text.Editable;
@@ -41,6 +44,16 @@ import org.thoughtcrime.securesms.contacts.ContactSelectionListAdapter.ViewHolde
 import org.thoughtcrime.securesms.contacts.ContactSelectionListAdapter.DataHolder;
 import org.thoughtcrime.securesms.contacts.ContactsDatabase;
 
+import org.thoughtcrime.securesms.push.TextSecureCommunicationFactory;
+import org.thoughtcrime.securesms.database.TextSecureDirectory;
+import org.thoughtcrime.securesms.recipients.Recipients;
+import org.thoughtcrime.securesms.recipients.RecipientFactory;
+import org.thoughtcrime.securesms.util.DirectoryHelper;
+import org.whispersystems.textsecure.api.TextSecureAccountManager;
+import org.whispersystems.textsecure.api.push.ContactTokenDetails;
+
+import java.io.IOException;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -68,6 +81,8 @@ public class PushContactSelectionListFragment extends    Fragment
   private EditText                  filterEditText;
   private String                    cursorFilter;
 
+  private TextSecureAccountManager  accountManager;
+  private TextSecureDirectory       directory;
 
   @Override
   public void onActivityCreated(Bundle icicle) {
@@ -108,7 +123,7 @@ public class PushContactSelectionListFragment extends    Fragment
     final ContactData contactData = new ContactData(data.id, data.name);
     final CharSequence label = ContactsContract.CommonDataKinds.Phone.getTypeLabel(getResources(),
                                                                                    data.numberType, "");
-    contactData.numbers.add(new ContactAccessor.NumberData(label.toString(), data.number));
+    contactData.numbers.add(new ContactAccessor.NumberData(label.toString(), data.label));
     if (multi) {
       selectedContacts.put(contactData.id, contactData);
     }
@@ -129,6 +144,8 @@ public class PushContactSelectionListFragment extends    Fragment
   }
 
   private void initializeResources() {
+	accountManager = TextSecureCommunicationFactory.createManager(getActivity());
+  	directory = TextSecureDirectory.getInstance(getActivity());
     emptyText = (TextView) getView().findViewById(android.R.id.empty);
     listView  = (StickyListHeadersListView) getView().findViewById(android.R.id.list);
     listView.setFocusable(true);
@@ -162,11 +179,46 @@ public class PushContactSelectionListFragment extends    Fragment
 
   @Override
   public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-    if (getActivity().getIntent().getBooleanExtra(PushContactSelectionActivity.PUSH_ONLY_EXTRA, false)) {
+	final Context context = getActivity();
+	final String filter = cursorFilter;
+	return new CursorLoader(getActivity()) {
+		@Override public Cursor loadInBackground() {
+			MatrixCursor newNumberCursor = new MatrixCursor(new String[]{
+				ContactsContract.CommonDataKinds.Phone._ID,
+				ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
+				ContactsContract.CommonDataKinds.Phone.TYPE,
+				ContactsContract.CommonDataKinds.Phone.NUMBER,
+				ContactsContract.CommonDataKinds.Phone.LABEL,
+				"type"
+			}, 1);
+			try {
+				if (filter != null) {
+					Recipients r = RecipientFactory.getRecipientsFromString(context, filter, false);
+					if (!DirectoryHelper.isPushDestination(context, r)) {
+						List<ContactTokenDetails> activeTokens = accountManager.getContacts(Collections.singleton(filter));
+						if (activeTokens != null && activeTokens.size() > 0) {
+							for (ContactTokenDetails activeToken : activeTokens) {
+								activeToken.setNumber(activeToken.getNumber());
+							}
+							directory.setNumbers(activeTokens, Collections.<String>emptySet());
+						}
+					}
+					if (DirectoryHelper.isPushDestination(context, r)) {
+						newNumberCursor.addRow(new Object[]{-1L, context.getString(R.string.contact_selection_list__unknown_contact),
+							ContactsContract.CommonDataKinds.Phone.TYPE_CUSTOM, "\u21e2", filter, ContactsDatabase.NORMAL_TYPE});
+					}
+				}
+			} catch (IOException e) {
+				Log.e(TAG, "failed to fetch contact tokens " + e.getMessage());
+			}
+			return newNumberCursor;
+		}
+	};
+/*    if (getActivity().getIntent().getBooleanExtra(PushContactSelectionActivity.PUSH_ONLY_EXTRA, false)) {
       return ContactAccessor.getInstance().getCursorLoaderForPushContacts(getActivity(), cursorFilter);
     } else {
       return ContactAccessor.getInstance().getCursorLoaderForContacts(getActivity(), cursorFilter);
-    }
+    }*/
   }
 
   @Override
