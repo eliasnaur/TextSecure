@@ -650,10 +650,10 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
     sendButton.resetAvailableTransports(isMediaMessage);
 
     if (!isEncryptedConversation)      sendButton.disableTransport(Type.TEXTSECURE);
-    if (recipients.isGroupRecipient()) sendButton.disableTransport(Type.SMS);
+    /*if (recipients.isGroupRecipient())*/ sendButton.disableTransport(Type.SMS);
 
     if (isEncryptedConversation) sendButton.setDefaultTransport(Type.TEXTSECURE);
-    else                         sendButton.setDefaultTransport(Type.SMS);
+    //else                         sendButton.setDefaultTransport(Type.SMS);
 
     calculateCharactersRemaining();
   }

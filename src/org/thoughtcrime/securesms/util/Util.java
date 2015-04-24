@@ -137,8 +137,9 @@ public class Util {
   public static String canonicalizeNumber(Context context, String number)
       throws InvalidNumberException
   {
-    String localNumber = TextSecurePreferences.getLocalNumber(context);
-    return PhoneNumberFormatter.formatNumber(number, localNumber);
+/*    String localNumber = TextSecurePreferences.getLocalNumber(context);
+    return PhoneNumberFormatter.formatNumber(number, localNumber);*/
+	  return number;
   }
 
   public static String canonicalizeNumberOrGroup(Context context, String number)
@@ -294,6 +295,6 @@ public class Util {
 
   @TargetApi(VERSION_CODES.LOLLIPOP)
   public static boolean isMmsCapable(Context context) {
-    return (VERSION.SDK_INT >= VERSION_CODES.LOLLIPOP) || OutgoingLegacyMmsConnection.isConnectionPossible(context);
+    return false; //(VERSION.SDK_INT >= VERSION_CODES.LOLLIPOP) || OutgoingLegacyMmsConnection.isConnectionPossible(context);
   }
 }
