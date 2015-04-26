@@ -135,6 +135,7 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
 	int attempt = 0;
     while (!stop.get()) {
 		if (!isConnectionNecessary()) {
+	  		attempt = 0;
 			releaseAndWait();
 		}
 	  if (stop.get())
@@ -152,8 +153,8 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
 	  }
 
 	  if (thePipe == null) {
-		  long waitMillis = Math.min(++attempt * 1000, TimeUnit.MINUTES.toMillis(REQUEST_TIMEOUT_MINUTES));
-      	  Log.w(TAG, "Setting alarm for reconnect in " + waitMillis);
+		  long waitMillis = Math.min((long)Math.pow(2, attempt++) * 1000, TimeUnit.MINUTES.toMillis(REQUEST_TIMEOUT_MINUTES));
+      	  Log.w(TAG, "Setting alarm for reconnect in " + waitMillis + " attempt " + attempt);
 		  waitingForReconnect = true;
 		  fireKeepAliveIn(MessageRetrievalService.this, waitMillis);
 		  releaseAndWait();
