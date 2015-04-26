@@ -14,7 +14,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.afollestad.materialdialogs.AlertDialogWrapper;
-import com.google.android.gms.gcm.GoogleCloudMessaging;
+//import com.google.android.gms.gcm.GoogleCloudMessaging;
 
 import org.thoughtcrime.securesms.ApplicationPreferencesActivity;
 import org.thoughtcrime.securesms.LogSubmitActivity;
@@ -71,11 +71,11 @@ public class AdvancedPreferenceFragment extends PreferenceFragment {
     }
   }
 
-  private void initializePushMessagingToggle() {
+/*  private void initializePushMessagingToggle() {
     CheckBoxPreference preference = (CheckBoxPreference)this.findPreference(PUSH_MESSAGING_PREF);
     preference.setChecked(TextSecurePreferences.isPushRegistered(getActivity()));
     preference.setOnPreferenceChangeListener(new PushMessagingClickListener());
-  }
+  }*/
 
   private void initializeIdentitySelection() {
     ContactIdentityManager identity = ContactIdentityManager.getInstance(getActivity());
@@ -125,7 +125,7 @@ public class AdvancedPreferenceFragment extends PreferenceFragment {
     }
   }
 
-  private class PushMessagingClickListener implements Preference.OnPreferenceChangeListener {
+/*  private class PushMessagingClickListener implements Preference.OnPreferenceChangeListener {
     private static final int SUCCESS       = 0;
     private static final int NETWORK_ERROR = 1;
 
@@ -200,5 +200,5 @@ public class AdvancedPreferenceFragment extends PreferenceFragment {
 
       return false;
     }
-  }
+  }*/
 }

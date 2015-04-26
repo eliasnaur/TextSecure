@@ -24,7 +24,7 @@ import org.thoughtcrime.securesms.crypto.PRNGFixes;
 import org.thoughtcrime.securesms.dependencies.AxolotlStorageModule;
 import org.thoughtcrime.securesms.dependencies.InjectableType;
 import org.thoughtcrime.securesms.dependencies.TextSecureCommunicationModule;
-import org.thoughtcrime.securesms.jobs.GcmRefreshJob;
+//import org.thoughtcrime.securesms.jobs.GcmRefreshJob;
 import org.thoughtcrime.securesms.jobs.persistence.EncryptingJobSerializer;
 import org.thoughtcrime.securesms.jobs.requirements.MasterSecretRequirementProvider;
 import org.thoughtcrime.securesms.jobs.requirements.ServiceRequirementProvider;
@@ -103,13 +103,13 @@ public class ApplicationContext extends Application implements DependencyInjecto
                                           new AxolotlStorageModule(this));
   }
 
-  private void initializeGcmCheck() {
+  /*private void initializeGcmCheck() {
     if (TextSecurePreferences.isPushRegistered(this) &&
         TextSecurePreferences.getGcmRegistrationId(this) == null)
     {
       this.jobManager.add(new GcmRefreshJob(this));
     }
-  }
+  }*/
 
   private void initializeKeepAlive() {
 	  Intent service = new Intent(MessageRetrievalService.ACTION_KEEPALIVE, null, this, MessageRetrievalService.class);
