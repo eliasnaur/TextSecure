@@ -152,7 +152,18 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
 	  }
 
 	  if (thePipe == null) {
-		  long waitMillis = Math.min((long)Math.pow(2, attempt++) * 1000, TimeUnit.MINUTES.toMillis(REQUEST_TIMEOUT_MINUTES));
+		  long maxMillis = TimeUnit.MINUTES.toMillis(REQUEST_TIMEOUT_MINUTES);
+		  long waitSeconds = 1;
+		  long waitMillis = TimeUnit.SECONDS.toMillis(waitSeconds);
+		  for (int i = 0; i < attempt; i++) {
+			  if (waitMillis > maxMillis) {
+				  waitMillis = maxMillis;
+				  break;
+			  }
+			  waitSeconds = waitSeconds*2;
+			  waitMillis = TimeUnit.SECONDS.toMillis(waitSeconds);
+		  }
+		  attempt++;
       	  Log.w(TAG, "Setting alarm for reconnect in " + waitMillis + " attempt " + attempt);
 		  synchronized (this) {
 			  waitingForReconnect = true;
