@@ -215,11 +215,9 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
   }
 
   @Override
-  public void onRequirementStatusChanged() {
-    synchronized (this) {
+  public synchronized void onRequirementStatusChanged() {
 	  waitingForReconnect = false;
-      notifyAll();
-    }
+	  notifyAll();
   }
 
   @Override
@@ -228,6 +226,7 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
   }
 
   private synchronized void incrementActive() {
+	waitingForReconnect = false;
     activeActivities++;
     Log.w(TAG, "Active Count: " + activeActivities);
     notifyAll();
