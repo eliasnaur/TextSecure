@@ -140,7 +140,7 @@ public class Recipients implements Iterable<Recipient> {
           !Patterns.EMAIL_ADDRESS.matcher(number).matches() &&
           !GroupUtil.isEncodedGroup(number))
       {
-        number = number.replaceAll("[^0-9+]", "");
+        //number = number.replaceAll("[^0-9+]", "");
       }
 
       recipientsArray[i++] = number;
