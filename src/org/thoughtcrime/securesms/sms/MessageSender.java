@@ -29,11 +29,9 @@ import org.thoughtcrime.securesms.database.NotInDirectoryException;
 import org.thoughtcrime.securesms.database.TextSecureDirectory;
 import org.thoughtcrime.securesms.database.ThreadDatabase;
 import org.thoughtcrime.securesms.database.model.MessageRecord;
-import org.thoughtcrime.securesms.jobs.MmsSendJob;
 import org.thoughtcrime.securesms.jobs.PushGroupSendJob;
 import org.thoughtcrime.securesms.jobs.PushMediaSendJob;
 import org.thoughtcrime.securesms.jobs.PushTextSendJob;
-import org.thoughtcrime.securesms.jobs.SmsSendJob;
 import org.thoughtcrime.securesms.mms.OutgoingMediaMessage;
 import org.thoughtcrime.securesms.push.TextSecureCommunicationFactory;
 import org.thoughtcrime.securesms.recipients.Recipient;
@@ -145,8 +143,6 @@ public class MessageSender {
       sendGroupPush(context, recipients, messageId, -1);
     } else if (!forceSms && isPushMediaSend(context, recipients)) {
       sendMediaPush(context, recipients, messageId);
-    } else {
-      sendMms(context, messageId);
     }
   }
 
@@ -157,8 +153,6 @@ public class MessageSender {
       sendTextSelf(context, messageId);
     } else if (!forceSms && isPushTextSend(context, recipients, keyExchange)) {
       sendTextPush(context, recipients, messageId);
-    } else {
-      sendSms(context, recipients, messageId);
     }
   }
 
@@ -196,16 +190,6 @@ public class MessageSender {
   private static void sendGroupPush(Context context, Recipients recipients, long messageId, long filterRecipientId) {
     JobManager jobManager = ApplicationContext.getInstance(context).getJobManager();
     jobManager.add(new PushGroupSendJob(context, messageId, recipients.getPrimaryRecipient().getNumber(), filterRecipientId));
-  }
-
-  private static void sendSms(Context context, Recipients recipients, long messageId) {
-    JobManager jobManager = ApplicationContext.getInstance(context).getJobManager();
-    jobManager.add(new SmsSendJob(context, messageId, recipients.getPrimaryRecipient().getName()));
-  }
-
-  private static void sendMms(Context context, long messageId) {
-    JobManager jobManager = ApplicationContext.getInstance(context).getJobManager();
-    jobManager.add(new MmsSendJob(context, messageId));
   }
 
   private static boolean isPushTextSend(Context context, Recipients recipients, boolean keyExchange) {
