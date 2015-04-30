@@ -307,7 +307,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
     case R.id.menu_add_attachment:            handleAddAttachment();                             return true;
     case R.id.menu_view_media:                handleViewMedia();                                 return true;
     case R.id.menu_add_to_contacts:           handleAddToContacts();                             return true;
-    case R.id.menu_abort_session:             handleAbortSecureSession();                        return true;
+    //case R.id.menu_abort_session:             handleAbortSecureSession();                        return true;
     case R.id.menu_verify_identity:           handleVerifyIdentity();                            return true;
     case R.id.menu_group_recipients:          handleDisplayGroupRecipients();                    return true;
     case R.id.menu_distribution_broadcast:    handleDistributionBroadcastEnabled(item);          return true;
