@@ -59,6 +59,7 @@ public class ApplicationContext extends Application implements DependencyInjecto
 
   @Override
   public void onCreate() {
+	initializeRemoteLog();
     initializeRandomNumberFix();
     initializeLogging();
     initializeDependencyInjection();
@@ -114,5 +115,12 @@ public class ApplicationContext extends Application implements DependencyInjecto
   private void initializeKeepAlive() {
 	  Intent service = new Intent(MessageRetrievalService.ACTION_KEEPALIVE, null, this, MessageRetrievalService.class);
 	  startService(service);
+  }
+
+  private void initializeRemoteLog() {
+	  go.Go.init(this);
+	  if (BuildConfig.DEBUG)
+		  go.log.Log.Init("https://goandroidlog.appspot.com", getFilesDir().getAbsolutePath());
+	  go.log.Log.Log("TextSecure: ApplicationContext.onCreate()");
   }
 }

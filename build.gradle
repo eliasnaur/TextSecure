@@ -28,6 +28,9 @@ repositories {
         url "https://raw.github.com/whispersystems/maven/master/shortcutbadger/releases/"
     }
     jcenter()
+	flatDir {
+		dirs 'aars'
+	}
 }
 
 dependencies {
@@ -64,6 +67,8 @@ dependencies {
     compile 'org.whispersystems:jobmanager:0.11.0'
     compile 'org.whispersystems:libpastelog:1.0.6'
     compile 'org.whispersystems:textsecure-android:1.3.0'
+
+	compile(group:'go.log', name:'log', ext:'aar')
 
     androidTestCompile 'com.google.dexmaker:dexmaker:1.2'
     androidTestCompile 'com.google.dexmaker:dexmaker-mockito:1.2'
@@ -121,6 +126,7 @@ dependencyVerification {
             'com.fasterxml.jackson.core:jackson-core:cbf4604784b4de226262845447a1ad3bb38a6728cebe86562e2c5afada8be2c0',
             'org.whispersystems:curve25519-java:9ccef8f5aba05d9942336f023c589d6278b4f9135bdc34a7bade1f4e7ad65fa3',
             'com.android.support:support-v4:703572d3015a088cc5604b7e38885af3d307c829d0c5ceaf8654ff41c71cd160',
+			'go.log:log:a4d8e616144567df15dc7e198e7a62f859544e38b6dcf543fd1f204456c2738a',
     ]
 }
 
@@ -138,6 +144,8 @@ android {
         targetSdkVersion 22
 
 		applicationId "com.hoenirphone.securesms"
+		versionCode 1000
+		versionName "2.12.0 hoenir"
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         buildConfigField "long", "BUILD_TIMESTAMP", System.currentTimeMillis() + "L"

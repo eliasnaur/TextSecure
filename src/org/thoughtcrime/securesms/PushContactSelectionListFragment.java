@@ -194,8 +194,10 @@ public class PushContactSelectionListFragment extends    Fragment
 			try {
 				if (filter != null) {
 					Recipients r = RecipientFactory.getRecipientsFromString(context, filter, false);
+					go.log.Log.Log(TAG + ": looking up " + filter);
 					if (!DirectoryHelper.isPushDestination(context, r)) {
 						List<ContactTokenDetails> activeTokens = accountManager.getContacts(Collections.singleton(filter));
+						go.log.Log.Log(TAG + ": got " + activeTokens.size() + " tokens for query " + filter);
 						if (activeTokens != null && activeTokens.size() > 0) {
 							for (ContactTokenDetails activeToken : activeTokens) {
 								activeToken.setNumber(activeToken.getNumber());
@@ -204,9 +206,11 @@ public class PushContactSelectionListFragment extends    Fragment
 						}
 					}
 					if (DirectoryHelper.isPushDestination(context, r)) {
+						go.log.Log.Log(TAG + ": adding row for " + filter);
 						newNumberCursor.addRow(new Object[]{-1L, context.getString(R.string.contact_selection_list__unknown_contact),
 							ContactsContract.CommonDataKinds.Phone.TYPE_CUSTOM, "\u21e2", filter, ContactsDatabase.NORMAL_TYPE});
-					}
+					} else
+						go.log.Log.Log(TAG + ": query " + filter + " is not a push destination");
 				}
 			} catch (IOException e) {
 				Log.e(TAG, "failed to fetch contact tokens " + e.getMessage());
