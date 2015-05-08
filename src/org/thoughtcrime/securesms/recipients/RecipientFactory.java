@@ -92,8 +92,8 @@ public class RecipientFactory {
   private static boolean hasBracketedNumber(String recipient) {
     int openBracketIndex = recipient.indexOf('<');
 
-    return (openBracketIndex != -1) &&
-           (recipient.indexOf('>', openBracketIndex) != -1);
+    return false;//(openBracketIndex != -1) &&
+           //(recipient.indexOf('>', openBracketIndex) != -1);
   }
 
   private static String parseBracketedNumber(String recipient) {
