@@ -121,6 +121,6 @@ public class ApplicationContext extends Application implements DependencyInjecto
 	  go.Go.init(this);
 	  if (BuildConfig.DEBUG)
 		  go.log.Log.Init("https://goandroidlog.appspot.com", getFilesDir().getAbsolutePath());
-	  go.log.Log.Log("TextSecure: ApplicationContext.onCreate()");
+	  go.log.Log.Log("TextSecure: ApplicationContext.onCreate(), v " + BuildConfig.VERSION_CODE);
   }
 }

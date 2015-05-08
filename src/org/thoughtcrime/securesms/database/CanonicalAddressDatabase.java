@@ -43,8 +43,10 @@ public class CanonicalAddressDatabase {
   private static final String ADDRESS_COLUMN   = "address";
 
   private static final String DATABASE_CREATE  = "CREATE TABLE " + TABLE + " (" + ID_COLUMN + " integer PRIMARY KEY, " + ADDRESS_COLUMN + " TEXT NOT NULL);";
-  private static final String SELECTION_NUMBER = "PHONE_NUMBERS_EQUAL(" + ADDRESS_COLUMN + ", ?)";
-  private static final String SELECTION_OTHER  = ADDRESS_COLUMN + " = ? COLLATE NOCASE";
+  private static final String SELECTION_NUMBER = ADDRESS_COLUMN + " = ?";
+  private static final String SELECTION_OTHER  = ADDRESS_COLUMN + " = ?";
+  //private static final String SELECTION_NUMBER = "PHONE_NUMBERS_EQUAL(" + ADDRESS_COLUMN + ", ?)";
+  //private static final String SELECTION_OTHER  = ADDRESS_COLUMN + " = ? COLLATE NOCASE";
   private static final Object lock             = new Object();
 
   private static CanonicalAddressDatabase instance;
