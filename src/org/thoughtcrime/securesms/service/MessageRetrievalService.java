@@ -9,7 +9,7 @@ import android.content.Intent;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.SystemClock;
-//import android.util.Log;
+import android.util.Log;
 
 import org.thoughtcrime.securesms.ApplicationContext;
 import org.thoughtcrime.securesms.ConversationListActivity;
@@ -39,8 +39,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.inject.Inject;
 
-import go.log.Log;
-
 public class MessageRetrievalService extends Service implements Runnable, InjectableType, RequirementListener {
 	private final static int FOREGROUND_NOTIFICATION_ID = 1234;
 
@@ -52,7 +50,7 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
   public static final  String ACTION_PUSH_RECEIVED     = "PUSH_RECEIVED";
 
   private static final int   REQUEST_TIMEOUT_MINUTES          = 15;
-  private static final int   REQUEST_TIMEOUT_JITTER_MINUTES   = 1;
+  private static final int   REQUEST_TIMEOUT_JITTER_MINUTES   = 2;
 
   private NetworkRequirement         networkRequirement;
   private NetworkRequirementProvider networkRequirementProvider;
@@ -72,7 +70,7 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
   @Override
   public void onCreate() {
     super.onCreate();
-	Log.Log(TAG + ": onCreate");
+	Log.w(TAG, "onCreate!");
     ApplicationContext.getInstance(this).injectDependencies(this);
 
     networkRequirement         = new NetworkRequirement(this);
@@ -106,19 +104,19 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
 	  try {
 		  doRun();
 	  } finally {
-    	  Log.Log(TAG + " exiting ws thread...");
+    	  Log.w(TAG, "Exiting ws thread...");
 		  releaseWakeLock();
 	  }
   }
 
   private synchronized void releaseWakeLock() {
-	  Log.Log(TAG + " releasing wakelock");
+	  Log.i(TAG, "releasing wakelock");
 	  wakeLock.release();
 	  registerForeground();
   }
 
   private synchronized void acquireWakeLock() {
-	  Log.Log(TAG +  " acquiring wakelock");
+	  Log.i(TAG, "acquiring wakelock");
 	  wakeLock.acquire();
 	  registerForeground();
   }
@@ -126,7 +124,7 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
   private synchronized void releaseAndWait() {
 	  releaseWakeLock();
 	  try {
-		  Log.Log(TAG + " Waiting for websocket state change....");
+		  Log.w(TAG, "Waiting for websocket state change....");
 		  waitForConnectionNecessary();
 	  } finally {
 		  acquireWakeLock();
@@ -142,12 +140,12 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
 	  if (stop.get())
 		  continue;
 
-      Log.Log(TAG + " Making websocket connection....");
+      Log.w(TAG, "Making websocket connection....");
 	  TextSecureMessagePipe thePipe = null;
 	  try {
 		  thePipe = receiver.createMessagePipe((REQUEST_TIMEOUT_MINUTES + REQUEST_TIMEOUT_JITTER_MINUTES)*60);
 	  } catch (IOException e) {
-		  Log.Log(TAG + " websocket connect error: " + e.getMessage());
+		  Log.w(TAG, "Connect error: " + e.getMessage());
 	  }
 	  synchronized (this) {
 		  pipe = thePipe;
@@ -166,7 +164,7 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
 			  waitMillis = TimeUnit.SECONDS.toMillis(waitSeconds);
 		  }
 		  attempt++;
-      	  Log.Log(TAG + " Setting alarm for reconnect in " + waitMillis + " attempt " + attempt);
+      	  Log.w(TAG, "Setting alarm for reconnect in " + waitMillis + " attempt " + attempt);
 		  synchronized (this) {
 			  waitingForReconnect = true;
 		  }
@@ -180,12 +178,12 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
         while (isConnectionNecessary() && !stop.get()) {
           try {
 	  		scheduleKeepAlive(MessageRetrievalService.this);
-            Log.Log(TAG + " Reading message...");
+            Log.w(TAG, "Reading message...");
             thePipe.read(Integer.MAX_VALUE, TimeUnit.MILLISECONDS,
                       new TextSecureMessagePipe.MessagePipeCallback() {
                         @Override
                         public void onMessage(TextSecureEnvelope envelope) {
-                          Log.Log(TAG + " Retrieved envelope! " + envelope.getSource());
+                          Log.w(TAG, "Retrieved envelope! " + envelope.getSource());
 
                           PushContentReceiveJob receiveJob = new PushContentReceiveJob(MessageRetrievalService.this);
                           receiveJob.handle(envelope, false);
@@ -200,19 +198,19 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
 						}
                       });
           } catch (TimeoutException e) {
-            Log.Log(TAG + " Application level read timeout...");
+            Log.w(TAG, "Application level read timeout...");
           } catch (InvalidVersionException e) {
-            Log.Log(TAG + " InvalidVersionException: " + e.getMessage());
+            Log.w(TAG, e);
           }
         }
       } catch (Throwable e) {
-        Log.Log(TAG + ": top level exception from websocket looper: " + e.getMessage());
+        Log.w(TAG, e);
       } finally {
-        Log.Log(TAG + " Shutting down pipe...");
+        Log.w(TAG, "Shutting down pipe...");
         shutdown(thePipe);
       }
 
-      Log.Log(TAG + " Looping...");
+      Log.w(TAG, "Looping...");
     }
   }
 
@@ -230,13 +228,13 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
   private synchronized void incrementActive() {
 	waitingForReconnect = false;
     activeActivities++;
-    Log.Log(TAG + " Active Count: " + activeActivities);
+    Log.w(TAG, "Active Count: " + activeActivities);
     notifyAll();
   }
 
   private synchronized void decrementActive() {
     activeActivities--;
-    Log.Log(TAG + " Active Count: " + activeActivities);
+    Log.w(TAG, "Active Count: " + activeActivities);
     notifyAll();
   }
 
@@ -254,7 +252,7 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
   }
 
   private synchronized boolean isConnectionNecessary() {
-    Log.Log(TAG + " " + String.format("Network requirement: %s, active activities: %s, push pending: %s, waiting for reconnect: %s",
+    Log.w(TAG, String.format("Network requirement: %s, active activities: %s, push pending: %s, waiting for reconnect: %s",
                              networkRequirement.isPresent(), activeActivities, pushPending.size(), waitingForReconnect));
 
     return TextSecurePreferences.isWebsocketRegistered(this) &&
@@ -274,7 +272,7 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
     try {
       pipe.shutdown();
     } catch (Throwable t) {
-	  Log.Log(TAG + ": pipe shutdown error: " + t.getMessage());
+      Log.w(TAG, t);
     }
   }
 
@@ -310,7 +308,7 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
   private static void fireKeepAliveIn(Context ctx, long millis) {
 	  if (!TextSecurePreferences.isWebsocketRegistered(ctx))
 		  return;
-	  Log.Log(TAG + ": setting keep alive timer in " + millis + " millis (" + (millis/(1000*60)) + " minutes)");
+	  Log.i(TAG, "setting keep alive timer in " + millis);
 	  ctx = ctx.getApplicationContext();
 	  AlarmManager alarmMgr = (AlarmManager)ctx.getSystemService(Context.ALARM_SERVICE);
 	  Intent bInt = new Intent(ctx, KeepAliveReceiver.class);
@@ -326,7 +324,7 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
 
   private void keepAlive(Intent intent) {
 	  try {
-	    Log.Log(TAG + ": keep alive prod");
+	  	Log.i(TAG, "Keep alive prod");
 		ApplicationContext.getInstance(this).getJobManager().add(new Job(JobParameters.newBuilder()
 					.withWakeLock(true)
 					.create()) {
@@ -355,7 +353,7 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
 
   @Override public void onDestroy() {
 	  super.onDestroy();
-	  Log.Log(TAG + ": onDestroy");
+	  Log.w(TAG, "onDestroy!");
 	  stop.set(true);
 	  synchronized (this) {
 		  notifyAll();
