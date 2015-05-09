@@ -50,7 +50,7 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
   public static final  String ACTION_PUSH_RECEIVED     = "PUSH_RECEIVED";
 
   private static final int   REQUEST_TIMEOUT_MINUTES          = 15;
-  private static final int   REQUEST_TIMEOUT_JITTER_MINUTES   = 2;
+  private static final int   REQUEST_TIMEOUT_JITTER_MINUTES   = 1;
 
   private NetworkRequirement         networkRequirement;
   private NetworkRequirementProvider networkRequirementProvider;
