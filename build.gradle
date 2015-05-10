@@ -108,7 +108,7 @@ dependencyVerification {
             'com.nineoldandroids:library:68025a14e3e7673d6ad2f95e4b46d78d7d068343aa99256b686fe59de1b3163a',
             'javax.inject:javax.inject:91c77044a50c481636c32d916fd89c9118a72195390452c81065080f957de7ff',
             'com.madgag.spongycastle:core:8d6240b974b0aca4d3da9c7dd44d42339d8a374358aca5fc98e50a995764511f',
-            'org.whispersystems:textsecure-java:0b6b4cdac31889d13b30da84878e13adfb38ee1c6eb0901b59abf69905fa39f4',
+			'org.whispersystems:textsecure-java:cb3b538bb0a518adb564ced2914ffaae9ca7f263d3383d64dfddebaa11f557bd',
             'org.whispersystems:axolotl-android:40d3db5004a84749a73f68d2f0d01b2ae35a73c54df96d8c6c6723b96efb6fc0',
             'org.whispersystems:axolotl-java:6daee739b89d8d7101de6d98f77132fee48495c6ea647d880e77def842f999ea',
             'org.whispersystems:curve25519-android:3c29a4131a69b0d16baaa3d707678deb39602c3a3ffd75805ce7f9db252e5d0d',
