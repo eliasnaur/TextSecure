@@ -1,0 +1,4 @@
+package android
+
+func Start() {
+}

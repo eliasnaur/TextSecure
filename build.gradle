@@ -15,6 +15,9 @@ apply plugin: 'witness'
 
 repositories {
     mavenLocal()
+	flatDir {
+		dirs 'aars'
+	}
     maven {
         url "https://repo1.maven.org/maven2/"
     }
@@ -68,6 +71,8 @@ dependencies {
     compile 'org.whispersystems:libpastelog:1.0.6'
     compile 'org.whispersystems:textsecure-android:1.3.0'
     compile 'com.amulyakhare:com.amulyakhare.textdrawable:1.0.1'
+
+	compile(group:'go.textsecure', name:'android', ext:'aar')
 
     androidTestCompile 'com.google.dexmaker:dexmaker:1.2'
     androidTestCompile 'com.google.dexmaker:dexmaker-mockito:1.2'

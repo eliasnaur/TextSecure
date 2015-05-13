@@ -83,6 +83,7 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
     networkRequirementProvider.setListener(this);
 
 	registerForeground();
+	go.android.Android.Start();
     thread = new Thread(this, "MessageRetrievalService");
 	thread.start();
   }
