@@ -141,12 +141,17 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
 		  continue;
 
       Log.w(TAG, "Making websocket connection....");
-	  TextSecureMessagePipe thePipe = receiver.createMessagePipe((REQUEST_TIMEOUT_MINUTES + REQUEST_TIMEOUT_JITTER_MINUTES)*60);
+	  TextSecureMessagePipe thePipe = null;
+	  try {
+		  thePipe = receiver.createMessagePipe((REQUEST_TIMEOUT_MINUTES + REQUEST_TIMEOUT_JITTER_MINUTES)*60);
+	  } catch (IOException e) {
+		  Log.w(TAG, "failed to connect: " + e.getMessage());
+	  }
 	  synchronized (this) {
 		  pipe = thePipe;
 	  }
 
-	  /*if (thePipe == null) {
+	  if (thePipe == null) {
 		  long maxMillis = TimeUnit.MINUTES.toMillis(REQUEST_TIMEOUT_MINUTES);
 		  long waitSeconds = 1;
 		  long waitMillis = TimeUnit.SECONDS.toMillis(waitSeconds);
@@ -166,7 +171,7 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
 		  fireKeepAliveIn(MessageRetrievalService.this, waitMillis);
 		  releaseAndWait();
 		  continue;
-	  }*/
+	  }
 	  attempt = 0;
 
       try {
