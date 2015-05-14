@@ -14,20 +14,24 @@ import (
 
 type (
 	Pipe struct {
-		url            string
-		certPool       *x509.CertPool
-		creds          CredentialsProvider
-		ws             *websocket.Conn
-		callbacks      Callbacks
-		closer         chan struct{}
-		waker          chan struct{}
-		writer         chan []byte
-		commErr        chan error
-		connected      chan *websocket.Conn
-		retryDelay     time.Duration
-		keepaliveDelay time.Duration
-		wl             WakeLock
-		rWL            WakeLock
+		url        string
+		certPool   *x509.CertPool
+		creds      CredentialsProvider
+		callbacks  Callbacks
+		closer     chan struct{}
+		waker      chan struct{}
+		retryDelay time.Duration
+		wl         WakeLock
+		rWL        WakeLock
+	}
+	pipeIO struct {
+		closer    chan struct{}
+		ws        *websocket.Conn
+		writer    chan []byte
+		commErr   chan error
+		connected chan *websocket.Conn
+		wl        WakeLock
+		callbacks Callbacks
 	}
 	CredentialsProvider interface {
 		User() string
@@ -85,23 +89,17 @@ func (p *Pipe) Start() {
 	go p.loop()
 }
 
-func (p *Pipe) connect() (*websocket.Conn, error) {
-	log.Println("connecting to websocket " + p.url)
-	user, pass := p.creds.User(), p.creds.Password()
-	authURL := p.url + "?login=" + url.QueryEscape(user) + "&password=" + url.QueryEscape(pass)
-	dialer := &websocket.Dialer{TLSClientConfig: &tls.Config{RootCAs: p.certPool}}
+func (p *pipeIO) connect(pipe *Pipe) (*websocket.Conn, error) {
+	log.Println("connecting to websocket " + pipe.url)
+	user, pass := pipe.creds.User(), pipe.creds.Password()
+	authURL := pipe.url + "?login=" + url.QueryEscape(user) + "&password=" + url.QueryEscape(pass)
+	dialer := &websocket.Dialer{TLSClientConfig: &tls.Config{RootCAs: pipe.certPool}}
 	ws, _, err := dialer.Dial(authURL, http.Header{})
 	return ws, err
 }
 
-func (p *Pipe) close() {
-	p.ws.Close()
-	p.ws = nil
-}
-
-func (p *Pipe) connecter() {
-	ws, err := p.connect()
-	p.rWL.Acquire()
+func (p *pipeIO) connecter(pipe *Pipe) {
+	ws, err := p.connect(pipe)
 	if err != nil {
 		p.commErr <- err
 		return
@@ -109,25 +107,29 @@ func (p *Pipe) connecter() {
 	p.connected <- ws
 }
 
-func (p *Pipe) readLoop() {
+func (p *pipeIO) readLoop() {
 	defer log.Println("exiting websocket read loop")
-	defer p.rWL.Release()
+	defer p.wl.Release()
 	for {
-		p.rWL.Release()
+		p.wl.Release()
 		log.Println("reading message...")
 		_, payload, err := p.ws.ReadMessage()
-		p.rWL.Acquire()
+		p.wl.Acquire()
 		if err != nil {
 			p.commErr <- err
 			return
 		}
 		if resp := p.callbacks.OnMessage(payload); resp != nil {
-			p.writer <- resp
+			select {
+			case p.writer <- resp:
+			case <-p.closer:
+				return
+			}
 		}
 	}
 }
 
-func (p *Pipe) writeLoop() {
+func (p *pipeIO) writeLoop() {
 	defer log.Println("exiting websocket write loop")
 	for {
 		select {
@@ -142,35 +144,49 @@ func (p *Pipe) writeLoop() {
 	}
 }
 
+func (p *pipeIO) close() {
+	log.Println("closing pipeIO")
+	close(p.closer)
+}
+
 func (p *Pipe) loop() {
 	defer log.Println("exiting websocket loop")
 	defer p.wl.Release()
+	var pio *pipeIO
 	for {
 		if p.callbacks.ConnectionRequired() != 0 {
-			if p.ws == nil && p.connected == nil {
-				p.writer = make(chan []byte)
-				p.commErr = make(chan error, 2)
-				p.connected = make(chan *websocket.Conn, 1)
-				go p.connecter()
+			if pio == nil {
+				pio = &pipeIO{
+					writer:    make(chan []byte),
+					commErr:   make(chan error, 2),
+					connected: make(chan *websocket.Conn, 1),
+					closer:    make(chan struct{}),
+					wl:        p.rWL,
+					callbacks: p.callbacks,
+				}
+				pio.wl.Acquire()
+				go pio.connecter(p)
 			}
 			/*if p.ws != nil {
 				p.callbacks.WakeupIn(p.keepAliveDelay)
 			}*/
 		}
 		p.wl.Release()
+		var cPIO pipeIO
+		if pio != nil {
+			cPIO = *pio
+		}
 		select {
-		case p.ws = <-p.connected:
+		case pio.ws = <-cPIO.connected:
 			log.Println("websocket connected")
-			p.connected = nil
+			pio.connected = nil
 			p.retryDelay = 0
-			go p.readLoop()
-			go p.writeLoop()
-		case err := <-p.commErr:
+			go pio.readLoop()
+			go pio.writeLoop()
+		case err := <-cPIO.commErr:
 			log.Println("websocket failed: ", err)
-			p.rWL.Release()
-			p.connected = nil
-			p.commErr = nil
-			p.close()
+			pio.close()
+			pio = nil
 			p.retryDelay = 2 * p.retryDelay
 			if d := p.retryDelay; d < minDelay {
 				p.retryDelay = minDelay
@@ -179,8 +195,11 @@ func (p *Pipe) loop() {
 				p.retryDelay = maxDelay
 			}
 			p.callbacks.WakeupIn(int64(p.retryDelay))
+			p.rWL.Release()
 		case <-p.closer:
-			p.close()
+			if pio != nil {
+				pio.close()
+			}
 			return
 		case <-p.waker:
 			log.Println("websocket woke up")
