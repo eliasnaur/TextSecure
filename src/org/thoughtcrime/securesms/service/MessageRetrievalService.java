@@ -186,7 +186,12 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
 	  } catch (IOException | InvalidVersionException e) {
 		  Log.e(TAG, "failed to decode message envelope: " + e.getMessage());
 	  }
-	  return response.toByteArray();
+	  WebSocketProtos.WebSocketMessage respMsg = WebSocketProtos.WebSocketMessage.newBuilder()
+		  .setType(WebSocketProtos.WebSocketMessage.Type.RESPONSE)
+		  .setResponse(response)
+		  .build();
+
+	  return respMsg.toByteArray();
   }
 
   private static boolean isTextSecureEnvelope(WebSocketProtos.WebSocketRequestMessage message) {
