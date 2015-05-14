@@ -206,6 +206,14 @@ func (p *Pipe) loop() {
 			return
 		case <-p.waker:
 			log.Println("websocket woke up")
+			if pio == nil {
+				break
+			}
+			select {
+			case pio.writer <- p.callbacks.NewKeepAliveMessage():
+			default:
+				// Write queue is full
+			}
 		}
 	}
 }
