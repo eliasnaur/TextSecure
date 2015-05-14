@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"log"
+	"net/url"
 	"strings"
 
 	"golang.org/x/net/websocket"
@@ -13,12 +14,17 @@ type (
 	Pipe struct {
 		url      string
 		certPool *x509.CertPool
+		creds    CredentialsProvider
+	}
+	CredentialsProvider interface {
+		User() string
+		Password() string
 	}
 )
 
-func NewPipe(url string) *Pipe {
+func NewPipe(url string, creds CredentialsProvider) *Pipe {
 	url = strings.Replace(url, "https://", "wss://", 1) + "/v1/websocket/"
-	return &Pipe{url: url, certPool: x509.NewCertPool()}
+	return &Pipe{url: url, certPool: x509.NewCertPool(), creds: creds}
 }
 
 func (p *Pipe) AddAcceptedCert(encCert []byte) error {
@@ -30,16 +36,17 @@ func (p *Pipe) AddAcceptedCert(encCert []byte) error {
 	return nil
 }
 
-func (p *Pipe) Connect() {
+func (p *Pipe) Start() {
 	if err := p.connect(); err != nil {
 		log.Println("failed to connect: ", err)
 	}
 }
 
 func (p *Pipe) connect() error {
-	//	?login=%s&password=%s
 	log.Println("connecting to websocket " + p.url)
-	conf, err := websocket.NewConfig(p.url, "http://localhost")
+	user, pass := p.creds.User(), p.creds.Password()
+	authURL := p.url + "?login=" + url.QueryEscape(user) + "&password=" + url.QueryEscape(pass)
+	conf, err := websocket.NewConfig(authURL, "http://localhost")
 	if err != nil {
 		return err
 	}

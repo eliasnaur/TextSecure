@@ -56,7 +56,9 @@ import java.util.Collections;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class MessageRetrievalService extends Service implements Runnable, InjectableType, RequirementListener {
+import go.android.Android;
+
+public class MessageRetrievalService extends Service implements /*Runnable, */InjectableType, RequirementListener {
 	private final static int FOREGROUND_NOTIFICATION_ID = 1234;
 
   private static final String TAG = MessageRetrievalService.class.getSimpleName();
@@ -74,7 +76,7 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
 
   @Inject
   public TextSecureMessageReceiver receiver;
-  private TextSecureMessagePipe pipe;
+  //private TextSecureMessagePipe pipe;
   private PowerManager.WakeLock wakeLock;
   private boolean waitingForReconnect;
 
@@ -82,7 +84,8 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
   private List<Intent> pushPending      = new LinkedList<>();
 
   private AtomicBoolean stop = new AtomicBoolean(false);
-  private Thread thread;
+  private Android.Pipe pipe;
+  //private Thread thread;
 
   @Override
   public void onCreate() {
@@ -100,19 +103,27 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
     networkRequirementProvider.setListener(this);
 
 	registerForeground();
-	initSocket();
-    thread = new Thread(this, "MessageRetrievalService");
-	thread.start();
+	pipe = initPipe();
+    /*thread = new Thread(this, "MessageRetrievalService");
+	thread.start();*/
   }
 
-  private void initSocket() {
+  private Android.Pipe initPipe() {
 	  TextSecurePushTrustStore trustStore = new TextSecurePushTrustStore(this);
 	  TrustManager[] trustManagers = BlacklistingTrustManager.createFor(trustStore);
 	  List<X509Certificate> issuers = new ArrayList<X509Certificate>();
 	  for (TrustManager manager : trustManagers) {
 		  issuers.addAll(Arrays.asList(((X509TrustManager)manager).getAcceptedIssuers()));
 	  }
-	  go.android.Android.Pipe pipe = go.android.Android.NewPipe(org.thoughtcrime.securesms.Release.PUSH_URL);
+	  final Context appCtx = getApplicationContext();
+	  Android.Pipe pipe = Android.NewPipe(org.thoughtcrime.securesms.Release.PUSH_URL, new Android.CredentialsProvider.Stub() {
+		  @Override public String User() {
+			  return TextSecurePreferences.getLocalNumber(appCtx);
+		  }
+		  @Override public String Password() {
+			  return TextSecurePreferences.getPushServerPassword(appCtx);
+		  }
+	  });
 	  for (int i = 0; i < issuers.size(); i++) {
 		  X509Certificate cert = issuers.get(i);
 		  byte[] encCert;
@@ -127,7 +138,8 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
 			  throw new AssertionError(e);
 		  }
 	  }
-	  pipe.Connect();
+	  pipe.Start();
+	  return pipe;
   }
 
   public int onStartCommand(Intent intent, int flags, int startId) {
@@ -141,7 +153,7 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
     return START_STICKY;
   }
 
-  @Override
+  /*@Override
   public void run() {
 	  acquireWakeLock();
 	  try {
@@ -150,7 +162,7 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
     	  Log.w(TAG, "Exiting ws thread...");
 		  releaseWakeLock();
 	  }
-  }
+  }*/
 
   private synchronized void releaseWakeLock() {
 	  Log.i(TAG, "releasing wakelock");
@@ -174,7 +186,7 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
 	  }
   }
 
-  private void doRun() {
+  /*private void doRun() {
 	int attempt = 0;
     while (!stop.get()) {
 		if (!isConnectionNecessary()) {
@@ -255,7 +267,7 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
 
       Log.w(TAG, "Looping...");
     }
-  }
+  }*/
 
   @Override
   public synchronized void onRequirementStatusChanged() {
@@ -311,13 +323,13 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
     }
   }
 
-  private void shutdown(TextSecureMessagePipe pipe) {
+  /*private void shutdown(TextSecureMessagePipe pipe) {
     try {
       pipe.shutdown();
     } catch (Throwable t) {
       Log.w(TAG, t);
     }
-  }
+  }*/
 
   public static void registerActivityStarted(Context activity) {
     Intent intent = new Intent(activity, MessageRetrievalService.class);
@@ -367,7 +379,7 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
 
   private void keepAlive(Intent intent) {
 	  try {
-	  	Log.i(TAG, "Keep alive prod");
+/*	  	Log.i(TAG, "Keep alive prod");
 		ApplicationContext.getInstance(this).getJobManager().add(new Job(JobParameters.newBuilder()
 					.withWakeLock(true)
 					.create()) {
@@ -388,7 +400,7 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
 			@Override public boolean onShouldRetry(Exception e) {
 				return false;
 			}
-		});
+		});*/
 	  } finally {
 		  WakefulBroadcastReceiver.completeWakefulIntent(intent);
 	  }
@@ -397,10 +409,10 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
   @Override public void onDestroy() {
 	  super.onDestroy();
 	  Log.w(TAG, "onDestroy!");
-	  stop.set(true);
+	  /*stop.set(true);
 	  synchronized (this) {
 		  notifyAll();
-	  }
+	  }*/
 	  /*try {
 		  thread.join();
 	  } catch (InterruptedException e) {
