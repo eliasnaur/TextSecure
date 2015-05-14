@@ -99,6 +99,7 @@ func (p *Pipe) close() {
 
 func (p *Pipe) connecter() {
 	ws, err := p.connect()
+	p.rWL.Acquire()
 	if err != nil {
 		p.readErr <- err
 		return
@@ -110,6 +111,7 @@ func (p *Pipe) readLoop() {
 	defer log.Println("exiting websocket read loop")
 	defer p.rWL.Release()
 	for {
+		p.rWL.Release()
 		log.Println("reading message...")
 		_, payload, err := p.ws.ReadMessage()
 		p.rWL.Acquire()
@@ -120,7 +122,6 @@ func (p *Pipe) readLoop() {
 		if resp := p.callbacks.OnMessage(payload); resp != nil {
 			p.ws.WriteMessage(websocket.BinaryMessage, resp)
 		}
-		p.rWL.Release()
 	}
 }
 
@@ -141,14 +142,15 @@ func (p *Pipe) loop() {
 		p.wl.Release()
 		select {
 		case p.ws = <-p.connected:
-			p.connected = nil
 			log.Println("websocket connected")
+			p.connected = nil
 			p.retryDelay = 0
 			go p.readLoop()
 		case err := <-p.readErr:
+			log.Println("websocket failed: ", err)
+			p.rWL.Release()
 			p.connected = nil
 			p.readErr = nil
-			log.Println("websocket failed: ", err)
 			p.close()
 			p.retryDelay = 2 * p.retryDelay
 			if d := p.retryDelay; d < minDelay {
