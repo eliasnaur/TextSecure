@@ -39,6 +39,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.inject.Inject;
 
+import org.whispersystems.libaxolotl.InvalidVersionException;
 import org.thoughtcrime.securesms.push.TextSecurePushTrustStore;
 import org.whispersystems.textsecure.internal.util.BlacklistingTrustManager;
 import javax.net.ssl.TrustManager;
@@ -123,6 +124,10 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
 		  @Override public String Password() {
 			  return TextSecurePreferences.getPushServerPassword(appCtx);
 		  }
+	  }, new Android.Callbacks.Stub() {
+		  @Override public void OnMessage(byte[] msg) {
+			  handleMessage(msg);
+		  }
 	  });
 	  for (int i = 0; i < issuers.size(); i++) {
 		  X509Certificate cert = issuers.get(i);
@@ -151,6 +156,19 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
     else if (ACTION_KEEPALIVE.equals(intent.getAction()))         keepAlive(intent);
 
     return START_STICKY;
+  }
+
+  private void handleMessage(byte[] msg) {
+	  try {
+		  TextSecureEnvelope envelope = new TextSecureEnvelope(msg,
+				  TextSecurePreferences.getSignalingKey(getApplicationContext()));
+		  PushContentReceiveJob receiveJob = new PushContentReceiveJob(this);
+		  receiveJob.handle(envelope, false);
+
+		  decrementPushReceived();
+	  } catch (IOException | InvalidVersionException e) {
+		  Log.e(TAG, "failed to decode message: " + e.getMessage());
+	  }
   }
 
   /*@Override

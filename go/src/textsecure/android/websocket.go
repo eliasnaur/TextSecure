@@ -12,20 +12,24 @@ import (
 
 type (
 	Pipe struct {
-		url      string
-		certPool *x509.CertPool
-		creds    CredentialsProvider
-		ws       *websocket.Conn
+		url       string
+		certPool  *x509.CertPool
+		creds     CredentialsProvider
+		ws        *websocket.Conn
+		callbacks Callbacks
 	}
 	CredentialsProvider interface {
 		User() string
 		Password() string
 	}
+	Callbacks interface {
+		OnMessage(msg []byte)
+	}
 )
 
-func NewPipe(url string, creds CredentialsProvider) *Pipe {
+func NewPipe(url string, creds CredentialsProvider, callbacks Callbacks) *Pipe {
 	url = strings.Replace(url, "https://", "wss://", 1) + "/v1/websocket/"
-	return &Pipe{url: url, certPool: x509.NewCertPool(), creds: creds}
+	return &Pipe{url: url, certPool: x509.NewCertPool(), creds: creds, callbacks: callbacks}
 }
 
 func (p *Pipe) AddAcceptedCert(encCert []byte) error {
@@ -72,12 +76,11 @@ func (p *Pipe) loop() {
 			p.ws = nil
 			break
 		}
-		log.Println("received data", data)
+		p.callbacks.OnMessage(data)
 	}
 }
 
 func unmarshal(data []byte, payloadType byte, v interface{}) error {
-	log.Println("received frame", payloadType, data)
 	ret := v.(*[]byte)
 	*ret = data
 	return nil
