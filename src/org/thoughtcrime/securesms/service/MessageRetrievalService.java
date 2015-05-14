@@ -81,6 +81,7 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
   public TextSecureMessageReceiver receiver;
   //private TextSecureMessagePipe pipe;
   private PowerManager.WakeLock wakeLock;
+  private PowerManager.WakeLock readWakeLock;
   private boolean waitingForReconnect;
 
   private int          activeActivities = 0;
@@ -99,9 +100,8 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
     networkRequirement         = new NetworkRequirement(this);
     networkRequirementProvider = new NetworkRequirementProvider(this);
 
-	PowerManager powerManager = (PowerManager)getSystemService(Context.POWER_SERVICE);
-	wakeLock     = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MessageRetrieval");
-	wakeLock.setReferenceCounted(false);
+	wakeLock = createWakeLock();
+	readWakeLock = createWakeLock();
 
     networkRequirementProvider.setListener(this);
 
@@ -109,6 +109,28 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
 	pipe = initPipe();
     /*thread = new Thread(this, "MessageRetrievalService");
 	thread.start();*/
+  }
+
+  private PowerManager.WakeLock createWakeLock() {
+	  PowerManager powerManager = (PowerManager)getSystemService(Context.POWER_SERVICE);
+	  final PowerManager.WakeLock wakeLock     = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MessageRetrieval");
+	  wakeLock.setReferenceCounted(false);
+	  return wakeLock;
+  }
+
+  private Android.WakeLock wrapWakeLock(final PowerManager.WakeLock wakeLock) {
+	  return new Android.WakeLock.Stub() {
+		  @Override public void Release() {
+			  Log.i(TAG, "releasing wakelock");
+			  wakeLock.release();
+			  registerForeground();
+		  }
+		  @Override public void Acquire() {
+			  Log.i(TAG, "acquiring wakelock");
+			  wakeLock.acquire();
+			  registerForeground();
+		  }
+	  };
   }
 
   private Android.Pipe initPipe() {
@@ -119,7 +141,9 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
 		  issuers.addAll(Arrays.asList(((X509TrustManager)manager).getAcceptedIssuers()));
 	  }
 	  final Context appCtx = getApplicationContext();
-	  Android.Pipe pipe = Android.NewPipe(org.thoughtcrime.securesms.Release.PUSH_URL, new Android.CredentialsProvider.Stub() {
+	  Android.Pipe pipe = Android.NewPipe(org.thoughtcrime.securesms.Release.PUSH_URL,
+		  wrapWakeLock(wakeLock), wrapWakeLock(readWakeLock),
+		  new Android.CredentialsProvider.Stub() {
 		  @Override public String User() {
 			  return TextSecurePreferences.getLocalNumber(appCtx);
 		  }
@@ -129,6 +153,12 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
 	  }, new Android.Callbacks.Stub() {
 		  @Override public byte[] OnMessage(byte[] msg) {
 			  return handleMessage(msg);
+		  }
+		  @Override public void WakeupIn(long nanos) {
+			  fireKeepAliveIn(appCtx, nanos/1000000);
+		  }
+		  @Override public long ConnectionRequired() {
+			  return isConnectionNecessary() ? 1 : 0;
 		  }
 	  });
 	  for (int i = 0; i < issuers.size(); i++) {
@@ -223,7 +253,7 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
     	  Log.w(TAG, "Exiting ws thread...");
 		  releaseWakeLock();
 	  }
-  }*/
+  }
 
   private synchronized void releaseWakeLock() {
 	  Log.i(TAG, "releasing wakelock");
@@ -247,7 +277,7 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
 	  }
   }
 
-  /*private void doRun() {
+  private void doRun() {
 	int attempt = 0;
     while (!stop.get()) {
 		if (!isConnectionNecessary()) {
@@ -333,7 +363,8 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
   @Override
   public synchronized void onRequirementStatusChanged() {
 	  waitingForReconnect = false;
-	  notifyAll();
+	  wakePipe();
+	  //notifyAll();
   }
 
   @Override
@@ -345,25 +376,29 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
 	waitingForReconnect = false;
     activeActivities++;
     Log.w(TAG, "Active Count: " + activeActivities);
-    notifyAll();
+	wakePipe();
+    //notifyAll();
   }
 
   private synchronized void decrementActive() {
     activeActivities--;
     Log.w(TAG, "Active Count: " + activeActivities);
-    notifyAll();
+	wakePipe();
+    //notifyAll();
   }
 
   private synchronized void incrementPushReceived(Intent intent) {
     pushPending.add(intent);
-    notifyAll();
+	wakePipe();
+    //notifyAll();
   }
 
   private synchronized void decrementPushReceived() {
     if (!pushPending.isEmpty()) {
       Intent intent = pushPending.remove(0);
       //GcmBroadcastReceiver.completeWakefulIntent(intent);
-      notifyAll();
+	  wakePipe();
+      //notifyAll();
     }
   }
 
@@ -414,7 +449,7 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
 		  .setWhen(0)
 		  .setContentIntent(intent)
 		  .setContentTitle(getString(org.thoughtcrime.securesms.R.string.foreground_websocket_title))
-		  .setContentText(wakeLock.isHeld() ?
+		  .setContentText(wakeLock.isHeld() || readWakeLock.isHeld() ?
 				  getString(org.thoughtcrime.securesms.R.string.foreground_websocket_text)
 				  : getString(org.thoughtcrime.securesms.R.string.foreground_websocket_text_idle))
 		  .getNotification();
@@ -432,10 +467,17 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
 	  alarmMgr.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + millis, intent);
   }
 
-  private static void scheduleKeepAlive(Context ctx) {
+/*  private static void scheduleKeepAlive(Context ctx) {
 	  double rand = 0.9 + Math.random()*.1;
 	  int millis = (int)(REQUEST_TIMEOUT_MINUTES*60*1000*rand);
 	  fireKeepAliveIn(ctx, millis);
+  }*/
+
+  private void wakePipe() {
+	  if (pipe != null) {
+		  wrapWakeLock(wakeLock).Acquire(); // Released in Go looper
+		  pipe.Wakeup();
+	  }
   }
 
   private void keepAlive(Intent intent) {
@@ -462,6 +504,7 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
 				return false;
 			}
 		});*/
+	  	  wakePipe();
 	  } finally {
 		  WakefulBroadcastReceiver.completeWakefulIntent(intent);
 	  }
@@ -470,6 +513,10 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
   @Override public void onDestroy() {
 	  super.onDestroy();
 	  Log.w(TAG, "onDestroy!");
+	  if (pipe != null) {
+		  pipe.Shutdown();
+		  pipe = null;
+	  }
 	  /*stop.set(true);
 	  synchronized (this) {
 		  notifyAll();
