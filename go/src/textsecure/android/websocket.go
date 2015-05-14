@@ -68,6 +68,7 @@ func (p *Pipe) loop() {
 		var data []byte
 		if err := codec.Receive(p.ws, &data); err != nil {
 			log.Println("error receiving", err)
+			p.ws.Close()
 			p.ws = nil
 			break
 		}
