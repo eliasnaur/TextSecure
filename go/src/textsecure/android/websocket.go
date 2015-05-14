@@ -15,6 +15,7 @@ type (
 		url      string
 		certPool *x509.CertPool
 		creds    CredentialsProvider
+		ws       *websocket.Conn
 	}
 	CredentialsProvider interface {
 		User() string
@@ -55,8 +56,32 @@ func (p *Pipe) connect() error {
 	if err != nil {
 		return err
 	}
-	log.Println("connected websocket", ws)
+	p.ws = ws
+	log.Println("websocket connected")
+	go p.loop()
 	return nil
+}
+
+func (p *Pipe) loop() {
+	codec := websocket.Codec{marshal, unmarshal}
+	for {
+		var data []byte
+		if err := codec.Receive(p.ws, &data); err != nil {
+			log.Println("error receiving", err)
+		}
+		log.Println("received data", data)
+	}
+}
+
+func unmarshal(data []byte, payloadType byte, v interface{}) error {
+	log.Println("received frame", payloadType, data)
+	ret := v.(*[]byte)
+	*ret = data
+	return nil
+}
+
+func marshal(v interface{}) (data []byte, payloadType byte, err error) {
+	return *v.(*[]byte), websocket.BinaryFrame, nil
 }
 
 func decodeCert(encCert []byte) (*x509.Certificate, error) {
