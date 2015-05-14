@@ -21,7 +21,8 @@ type (
 		callbacks      Callbacks
 		closer         chan struct{}
 		waker          chan struct{}
-		readErr        chan error
+		writer         chan []byte
+		commErr        chan error
 		connected      chan *websocket.Conn
 		retryDelay     time.Duration
 		keepaliveDelay time.Duration
@@ -34,6 +35,7 @@ type (
 	}
 	Callbacks interface {
 		OnMessage(msg []byte) []byte
+		NewKeepAliveMessage() []byte
 		WakeupIn(nanos int64)
 		ConnectionRequired() int
 	}
@@ -101,7 +103,7 @@ func (p *Pipe) connecter() {
 	ws, err := p.connect()
 	p.rWL.Acquire()
 	if err != nil {
-		p.readErr <- err
+		p.commErr <- err
 		return
 	}
 	p.connected <- ws
@@ -116,11 +118,26 @@ func (p *Pipe) readLoop() {
 		_, payload, err := p.ws.ReadMessage()
 		p.rWL.Acquire()
 		if err != nil {
-			p.readErr <- err
+			p.commErr <- err
 			return
 		}
 		if resp := p.callbacks.OnMessage(payload); resp != nil {
-			p.ws.WriteMessage(websocket.BinaryMessage, resp)
+			p.writer <- resp
+		}
+	}
+}
+
+func (p *Pipe) writeLoop() {
+	defer log.Println("exiting websocket write loop")
+	for {
+		select {
+		case payload := <-p.writer:
+			if err := p.ws.WriteMessage(websocket.BinaryMessage, payload); err != nil {
+				p.commErr <- err
+				return
+			}
+		case <-p.closer:
+			return
 		}
 	}
 }
@@ -131,7 +148,8 @@ func (p *Pipe) loop() {
 	for {
 		if p.callbacks.ConnectionRequired() != 0 {
 			if p.ws == nil && p.connected == nil {
-				p.readErr = make(chan error, 1)
+				p.writer = make(chan []byte)
+				p.commErr = make(chan error, 2)
 				p.connected = make(chan *websocket.Conn, 1)
 				go p.connecter()
 			}
@@ -146,11 +164,12 @@ func (p *Pipe) loop() {
 			p.connected = nil
 			p.retryDelay = 0
 			go p.readLoop()
-		case err := <-p.readErr:
+			go p.writeLoop()
+		case err := <-p.commErr:
 			log.Println("websocket failed: ", err)
 			p.rWL.Release()
 			p.connected = nil
-			p.readErr = nil
+			p.commErr = nil
 			p.close()
 			p.retryDelay = 2 * p.retryDelay
 			if d := p.retryDelay; d < minDelay {

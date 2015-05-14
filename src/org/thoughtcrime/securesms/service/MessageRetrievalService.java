@@ -154,6 +154,16 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
 		  @Override public byte[] OnMessage(byte[] msg) {
 			  return handleMessage(msg);
 		  }
+		  @Override public byte[] NewKeepAliveMessage() {
+			  return WebSocketProtos.WebSocketMessage.newBuilder()
+				  .setType(WebSocketProtos.WebSocketMessage.Type.REQUEST)
+				  .setRequest(WebSocketProtos.WebSocketRequestMessage.newBuilder()
+						  .setId(System.currentTimeMillis())
+						  .setPath("/v1/keepalive")
+						  .setVerb("GET")
+						  .build()).build()
+				  .toByteArray();
+		  }
 		  @Override public void WakeupIn(long nanos) {
 			  fireKeepAliveIn(appCtx, nanos/1000000);
 		  }
