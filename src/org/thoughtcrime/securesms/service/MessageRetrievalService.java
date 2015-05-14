@@ -115,15 +115,14 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
 	  go.android.Android.Pipe pipe = go.android.Android.NewPipe(org.thoughtcrime.securesms.Release.PUSH_URL);
 	  for (int i = 0; i < issuers.size(); i++) {
 		  X509Certificate cert = issuers.get(i);
-		  byte[] encCert, encKey;
+		  byte[] encCert;
 		  try {
 			  encCert = cert.getEncoded();
-			  encKey = cert.getPublicKey().getEncoded();
 		  } catch (CertificateEncodingException e) {
 			  throw new AssertionError(e);
 		  }
 		  try {
-			  pipe.AddAcceptedCert(encCert, encKey);
+			  pipe.AddAcceptedCert(encCert);
 		  } catch (Exception e) {
 			  throw new AssertionError(e);
 		  }
