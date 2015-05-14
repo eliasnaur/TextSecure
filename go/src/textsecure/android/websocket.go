@@ -4,10 +4,11 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"log"
+	"net/http"
 	"net/url"
 	"strings"
 
-	"golang.org/x/net/websocket"
+	"github.com/gorilla/websocket"
 )
 
 type (
@@ -23,7 +24,7 @@ type (
 		Password() string
 	}
 	Callbacks interface {
-		OnMessage(msg []byte)
+		OnMessage(msg []byte) []byte
 	}
 )
 
@@ -51,12 +52,8 @@ func (p *Pipe) connect() error {
 	log.Println("connecting to websocket " + p.url)
 	user, pass := p.creds.User(), p.creds.Password()
 	authURL := p.url + "?login=" + url.QueryEscape(user) + "&password=" + url.QueryEscape(pass)
-	conf, err := websocket.NewConfig(authURL, "http://localhost")
-	if err != nil {
-		return err
-	}
-	conf.TlsConfig = &tls.Config{RootCAs: p.certPool}
-	ws, err := websocket.DialConfig(conf)
+	dialer := &websocket.Dialer{TLSClientConfig: &tls.Config{RootCAs: p.certPool}}
+	ws, _, err := dialer.Dial(authURL, http.Header{})
 	if err != nil {
 		return err
 	}
@@ -66,28 +63,24 @@ func (p *Pipe) connect() error {
 	return nil
 }
 
+func (p *Pipe) close() {
+	p.ws.Close()
+	p.ws = nil
+}
+
 func (p *Pipe) loop() {
-	codec := websocket.Codec{marshal, unmarshal}
 	for {
-		var data []byte
-		if err := codec.Receive(p.ws, &data); err != nil {
-			log.Println("error receiving", err)
-			p.ws.Close()
-			p.ws = nil
+		log.Println("reading message...")
+		_, payload, err := p.ws.ReadMessage()
+		if err != nil {
+			log.Println("error receiving message", err)
+			p.close()
 			break
 		}
-		p.callbacks.OnMessage(data)
+		if resp := p.callbacks.OnMessage(payload); resp != nil {
+			p.ws.WriteMessage(websocket.BinaryMessage, resp)
+		}
 	}
-}
-
-func unmarshal(data []byte, payloadType byte, v interface{}) error {
-	ret := v.(*[]byte)
-	*ret = append((*ret)[:0], data...)
-	return nil
-}
-
-func marshal(v interface{}) (data []byte, payloadType byte, err error) {
-	return *v.(*[]byte), websocket.BinaryFrame, nil
 }
 
 func decodeCert(encCert []byte) (*x509.Certificate, error) {

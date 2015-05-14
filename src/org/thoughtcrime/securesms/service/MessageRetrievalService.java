@@ -127,8 +127,8 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
 			  return TextSecurePreferences.getPushServerPassword(appCtx);
 		  }
 	  }, new Android.Callbacks.Stub() {
-		  @Override public void OnMessage(byte[] msg) {
-			  handleMessage(msg);
+		  @Override public byte[] OnMessage(byte[] msg) {
+			  return handleMessage(msg);
 		  }
 	  });
 	  for (int i = 0; i < issuers.size(); i++) {
@@ -160,16 +160,16 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
     return START_STICKY;
   }
 
-  private void handleMessage(byte[] payload) {
+  private byte[] handleMessage(byte[] payload) {
 	  WebSocketProtos.WebSocketMessage message;
 	  try {
 		  message = WebSocketProtos.WebSocketMessage.parseFrom(payload);
 	  } catch (InvalidProtocolBufferException e) {
 		  Log.e(TAG, "failed to decode message: " + e.getMessage());
-		  return;
+		  return null;
 	  }
 	  if (message.getType().getNumber() != WebSocketProtos.WebSocketMessage.Type.REQUEST_VALUE) {
-		  return;
+		  return null;
 	  }
       WebSocketProtos.WebSocketRequestMessage request = message.getRequest();
       WebSocketProtos.WebSocketResponseMessage response = createWebSocketResponse(request);
@@ -185,9 +185,8 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
 		  }
 	  } catch (IOException | InvalidVersionException e) {
 		  Log.e(TAG, "failed to decode message envelope: " + e.getMessage());
-	  } finally {
-		  return;
 	  }
+	  return response.toByteArray();
   }
 
   private static boolean isTextSecureEnvelope(WebSocketProtos.WebSocketRequestMessage message) {
