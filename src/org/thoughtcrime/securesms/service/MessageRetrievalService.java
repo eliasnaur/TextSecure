@@ -56,6 +56,8 @@ import java.security.cert.CertificateEncodingException;
 import java.util.Collections;
 import java.util.ArrayList;
 import java.util.Arrays;
+import org.whispersystems.textsecure.internal.websocket.WebSocketProtos;
+import com.google.protobuf.InvalidProtocolBufferException;
 
 import go.android.Android;
 
@@ -158,17 +160,54 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
     return START_STICKY;
   }
 
-  private void handleMessage(byte[] msg) {
+  private void handleMessage(byte[] payload) {
+	  WebSocketProtos.WebSocketMessage message;
 	  try {
-		  TextSecureEnvelope envelope = new TextSecureEnvelope(msg,
-				  TextSecurePreferences.getSignalingKey(getApplicationContext()));
-		  PushContentReceiveJob receiveJob = new PushContentReceiveJob(this);
-		  receiveJob.handle(envelope, false);
-
-		  decrementPushReceived();
-	  } catch (IOException | InvalidVersionException e) {
+		  message = WebSocketProtos.WebSocketMessage.parseFrom(payload);
+	  } catch (InvalidProtocolBufferException e) {
 		  Log.e(TAG, "failed to decode message: " + e.getMessage());
+		  return;
 	  }
+	  if (message.getType().getNumber() != WebSocketProtos.WebSocketMessage.Type.REQUEST_VALUE) {
+		  return;
+	  }
+      WebSocketProtos.WebSocketRequestMessage request = message.getRequest();
+      WebSocketProtos.WebSocketResponseMessage response = createWebSocketResponse(request);
+
+	  try {
+		  if (isTextSecureEnvelope(request)) {
+			  TextSecureEnvelope envelope = new TextSecureEnvelope(request.getBody().toByteArray(),
+					  TextSecurePreferences.getSignalingKey(getApplicationContext()));
+			  PushContentReceiveJob receiveJob = new PushContentReceiveJob(this);
+			  receiveJob.handle(envelope, false);
+
+			  decrementPushReceived();
+		  }
+	  } catch (IOException | InvalidVersionException e) {
+		  Log.e(TAG, "failed to decode message envelope: " + e.getMessage());
+	  } finally {
+		  return;
+	  }
+  }
+
+  private static boolean isTextSecureEnvelope(WebSocketProtos.WebSocketRequestMessage message) {
+    return "PUT".equals(message.getVerb()) && "/api/v1/message".equals(message.getPath());
+  }
+
+  private static WebSocketProtos.WebSocketResponseMessage createWebSocketResponse(WebSocketProtos.WebSocketRequestMessage request) {
+    if (isTextSecureEnvelope(request)) {
+      return WebSocketProtos.WebSocketResponseMessage.newBuilder()
+                                     .setId(request.getId())
+                                     .setStatus(200)
+                                     .setMessage("OK")
+                                     .build();
+    } else {
+      return WebSocketProtos.WebSocketResponseMessage.newBuilder()
+                                     .setId(request.getId())
+                                     .setStatus(400)
+                                     .setMessage("Unknown")
+                                     .build();
+    }
   }
 
   /*@Override

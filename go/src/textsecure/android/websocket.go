@@ -82,7 +82,7 @@ func (p *Pipe) loop() {
 
 func unmarshal(data []byte, payloadType byte, v interface{}) error {
 	ret := v.(*[]byte)
-	*ret = data
+	*ret = append((*ret)[:0], data...)
 	return nil
 }
 
