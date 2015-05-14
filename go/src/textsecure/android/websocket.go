@@ -146,6 +146,9 @@ func (p *pipeIO) writeLoop() {
 
 func (p *pipeIO) close() {
 	log.Println("closing pipeIO")
+	if p.ws != nil {
+		p.ws.Close()
+	}
 	close(p.closer)
 }
 
