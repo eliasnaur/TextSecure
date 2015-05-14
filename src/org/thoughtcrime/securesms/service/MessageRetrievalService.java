@@ -39,6 +39,23 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.inject.Inject;
 
+import org.thoughtcrime.securesms.push.TextSecurePushTrustStore;
+import org.whispersystems.textsecure.internal.util.BlacklistingTrustManager;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import java.io.InputStream;
+import java.io.IOException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
+import java.security.cert.CertificateEncodingException;
+import java.util.Collections;
+import java.util.ArrayList;
+import java.util.Arrays;
+
 public class MessageRetrievalService extends Service implements Runnable, InjectableType, RequirementListener {
 	private final static int FOREGROUND_NOTIFICATION_ID = 1234;
 
@@ -83,9 +100,35 @@ public class MessageRetrievalService extends Service implements Runnable, Inject
     networkRequirementProvider.setListener(this);
 
 	registerForeground();
-	go.android.Android.Start();
+	initSocket();
     thread = new Thread(this, "MessageRetrievalService");
 	thread.start();
+  }
+
+  private void initSocket() {
+	  TextSecurePushTrustStore trustStore = new TextSecurePushTrustStore(this);
+	  TrustManager[] trustManagers = BlacklistingTrustManager.createFor(trustStore);
+	  List<X509Certificate> issuers = new ArrayList<X509Certificate>();
+	  for (TrustManager manager : trustManagers) {
+		  issuers.addAll(Arrays.asList(((X509TrustManager)manager).getAcceptedIssuers()));
+	  }
+	  go.android.Android.Pipe pipe = go.android.Android.NewPipe(org.thoughtcrime.securesms.Release.PUSH_URL);
+	  for (int i = 0; i < issuers.size(); i++) {
+		  X509Certificate cert = issuers.get(i);
+		  byte[] encCert, encKey;
+		  try {
+			  encCert = cert.getEncoded();
+			  encKey = cert.getPublicKey().getEncoded();
+		  } catch (CertificateEncodingException e) {
+			  throw new AssertionError(e);
+		  }
+		  try {
+			  pipe.AddAcceptedCert(encCert, encKey);
+		  } catch (Exception e) {
+			  throw new AssertionError(e);
+		  }
+	  }
+	  pipe.Connect();
   }
 
   public int onStartCommand(Intent intent, int flags, int startId) {
