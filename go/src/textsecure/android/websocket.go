@@ -41,7 +41,7 @@ type (
 		OnMessage(msg []byte) []byte
 		NewKeepAliveMessage() []byte
 		WakeupIn(nanos int64)
-		ConnectionRequired() int
+		ConnectionRequired() bool
 	}
 	WakeLock interface {
 		Acquire()
@@ -157,7 +157,7 @@ func (p *Pipe) loop() {
 	defer p.wl.Release()
 	var pio *pipeIO
 	for {
-		if p.callbacks.ConnectionRequired() != 0 {
+		if p.callbacks.ConnectionRequired() {
 			if pio == nil {
 				pio = &pipeIO{
 					writer:    make(chan []byte),

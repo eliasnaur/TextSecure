@@ -167,8 +167,8 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
 		  @Override public void WakeupIn(long nanos) {
 			  fireKeepAliveIn(appCtx, nanos/1000000);
 		  }
-		  @Override public long ConnectionRequired() {
-			  return isConnectionNecessary() ? 1 : 0;
+		  @Override public boolean ConnectionRequired() {
+			  return isConnectionNecessary();
 		  }
 	  });
 	  for (int i = 0; i < issuers.size(); i++) {
