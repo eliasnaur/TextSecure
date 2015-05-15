@@ -78,6 +78,7 @@ func (p *Pipe) AddAcceptedCert(encCert []byte) error {
 }
 
 func (p *Pipe) Wakeup() {
+	p.wl.Acquire()
 	p.waker <- struct{}{}
 }
 

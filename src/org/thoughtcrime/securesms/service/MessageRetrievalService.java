@@ -56,6 +56,7 @@ import java.security.cert.CertificateEncodingException;
 import java.util.Collections;
 import java.util.ArrayList;
 import java.util.Arrays;
+import android.os.Handler;
 import org.whispersystems.textsecure.internal.websocket.WebSocketProtos;
 import com.google.protobuf.InvalidProtocolBufferException;
 
@@ -82,7 +83,8 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
   //private TextSecureMessagePipe pipe;
   private PowerManager.WakeLock wakeLock;
   private PowerManager.WakeLock readWakeLock;
-  private boolean waitingForReconnect;
+  private Handler handler;
+  //private boolean waitingForReconnect;
 
   private int          activeActivities = 0;
   private List<Intent> pushPending      = new LinkedList<>();
@@ -102,10 +104,11 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
 
 	wakeLock = createWakeLock();
 	readWakeLock = createWakeLock();
+	handler = new Handler();
 
     networkRequirementProvider.setListener(this);
 
-	registerForeground();
+	doRegisterForeground();
 	pipe = initPipe();
     /*thread = new Thread(this, "MessageRetrievalService");
 	thread.start();*/
@@ -372,7 +375,7 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
 
   @Override
   public synchronized void onRequirementStatusChanged() {
-	  waitingForReconnect = false;
+	  //waitingForReconnect = false;
 	  wakePipe();
 	  //notifyAll();
   }
@@ -383,7 +386,7 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
   }
 
   private synchronized void incrementActive() {
-	waitingForReconnect = false;
+	//waitingForReconnect = false;
     activeActivities++;
     Log.w(TAG, "Active Count: " + activeActivities);
 	wakePipe();
@@ -413,12 +416,12 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
   }
 
   private synchronized boolean isConnectionNecessary() {
-    Log.w(TAG, String.format("Network requirement: %s, active activities: %s, push pending: %s, waiting for reconnect: %s",
-                             networkRequirement.isPresent(), activeActivities, pushPending.size(), waitingForReconnect));
+    Log.w(TAG, String.format("Network requirement: %s, active activities: %s, push pending: %s",
+                             networkRequirement.isPresent(), activeActivities, pushPending.size()/*, waitingForReconnect*/));
 
     return TextSecurePreferences.isWebsocketRegistered(this) &&
            (true/*activeActivities > 0*/ || !pushPending.isEmpty())  &&
-           networkRequirement.isPresent() && !waitingForReconnect;
+           networkRequirement.isPresent()/* && !waitingForReconnect*/;
   }
 
   private synchronized void waitForConnectionNecessary() {
@@ -449,7 +452,15 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
     activity.startService(intent);
   }
 
-  private synchronized void registerForeground() {
+  private void registerForeground() {
+	  handler.post(new Runnable() {
+		  @Override public void run() {
+			  doRegisterForeground();
+		  }
+	  });
+  }
+
+  private void doRegisterForeground() {
 	  Intent launch = new Intent(this, ConversationListActivity.class);
 	  PendingIntent intent = PendingIntent.getActivity(this, 0, launch, PendingIntent.FLAG_UPDATE_CURRENT);
 	  Notification notification = new NotificationCompat.Builder(this)
@@ -485,7 +496,6 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
 
   private void wakePipe() {
 	  if (pipe != null) {
-		  wrapWakeLock(wakeLock).Acquire(); // Released in Go looper
 		  pipe.Wakeup();
 	  }
   }
