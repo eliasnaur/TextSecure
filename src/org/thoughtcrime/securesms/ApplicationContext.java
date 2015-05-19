@@ -113,7 +113,7 @@ public class ApplicationContext extends Application implements DependencyInjecto
 
   private void initializeKeepAlive() {
 	  go.Go.init(this);
-	  Intent service = new Intent(MessageRetrievalService.ACTION_KEEPALIVE, null, this, MessageRetrievalService.class);
+	  Intent service = new Intent(MessageRetrievalService.ACTION_INIT, null, this, MessageRetrievalService.class);
 	  startService(service);
   }
 }

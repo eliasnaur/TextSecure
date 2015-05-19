@@ -67,6 +67,7 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
 
   private static final String TAG = MessageRetrievalService.class.getSimpleName();
 
+  public static final  String ACTION_INIT              = "INIT";
   public static final  String ACTION_KEEPALIVE         = "KEEPALIVE";
   public static final  String ACTION_ACTIVITY_STARTED  = "ACTIVITY_STARTED";
   public static final  String ACTION_ACTIVITY_FINISHED = "ACTIVITY_FINISHED";
@@ -376,7 +377,7 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
   @Override
   public synchronized void onRequirementStatusChanged() {
 	  //waitingForReconnect = false;
-	  wakePipe();
+	  notifyPipe();
 	  //notifyAll();
   }
 
@@ -389,20 +390,20 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
 	//waitingForReconnect = false;
     activeActivities++;
     Log.w(TAG, "Active Count: " + activeActivities);
-	wakePipe();
+	notifyPipe();
     //notifyAll();
   }
 
   private synchronized void decrementActive() {
     activeActivities--;
     Log.w(TAG, "Active Count: " + activeActivities);
-	wakePipe();
+	notifyPipe();
     //notifyAll();
   }
 
   private synchronized void incrementPushReceived(Intent intent) {
     pushPending.add(intent);
-	wakePipe();
+	notifyPipe();
     //notifyAll();
   }
 
@@ -410,7 +411,7 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
     if (!pushPending.isEmpty()) {
       Intent intent = pushPending.remove(0);
       //GcmBroadcastReceiver.completeWakefulIntent(intent);
-	  wakePipe();
+	  notifyPipe();
       //notifyAll();
     }
   }
@@ -494,9 +495,9 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
 	  fireKeepAliveIn(ctx, millis);
   }*/
 
-  private void wakePipe() {
+  private void notifyPipe() {
 	  if (pipe != null) {
-		  pipe.Wakeup();
+		  pipe.Notify();
 	  }
   }
 
@@ -524,7 +525,9 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
 				return false;
 			}
 		});*/
-	  	  wakePipe();
+		  if (pipe != null) {
+			  pipe.Wakeup();
+		  }
 	  } finally {
 		  WakefulBroadcastReceiver.completeWakefulIntent(intent);
 	  }

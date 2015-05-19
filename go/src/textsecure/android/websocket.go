@@ -20,6 +20,7 @@ type (
 		callbacks  Callbacks
 		closer     chan struct{}
 		waker      chan struct{}
+		notifier   chan struct{}
 		retryDelay time.Duration
 		wl         WakeLock
 		rWL        WakeLock
@@ -62,6 +63,7 @@ func NewPipe(url string, wl, rWL WakeLock, creds CredentialsProvider, callbacks 
 		creds:     creds,
 		callbacks: callbacks,
 		waker:     make(chan struct{}),
+		notifier:  make(chan struct{}),
 		closer:    make(chan struct{}),
 		wl:        wl,
 		rWL:       rWL,
@@ -75,6 +77,11 @@ func (p *Pipe) AddAcceptedCert(encCert []byte) error {
 	}
 	p.certPool.AddCert(cert)
 	return nil
+}
+
+func (p *Pipe) Notify() {
+	p.wl.Acquire()
+	p.notifier <- struct{}{}
 }
 
 func (p *Pipe) Wakeup() {
@@ -199,6 +206,8 @@ func (p *Pipe) loop() {
 				pio.close()
 			}
 			return
+		case <-p.notifier:
+			log.Println("websocket notified")
 		case <-p.waker:
 			log.Println("websocket woke up")
 			if pio == nil {
