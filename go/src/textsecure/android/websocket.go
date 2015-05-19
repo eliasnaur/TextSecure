@@ -101,7 +101,10 @@ func (p *pipeIO) connect(pipe *Pipe) (*websocket.Conn, error) {
 	log.Println("connecting to websocket " + pipe.url)
 	user, pass := pipe.creds.User(), pipe.creds.Password()
 	authURL := pipe.url + "?login=" + url.QueryEscape(user) + "&password=" + url.QueryEscape(pass)
-	dialer := &websocket.Dialer{TLSClientConfig: &tls.Config{RootCAs: pipe.certPool}}
+	dialer := &websocket.Dialer{
+		TLSClientConfig:  &tls.Config{RootCAs: pipe.certPool},
+		HandshakeTimeout: 30 * time.Second,
+	}
 	ws, _, err := dialer.Dial(authURL, http.Header{})
 	return ws, err
 }
