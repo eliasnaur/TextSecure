@@ -63,7 +63,7 @@ const (
 	maxDelay = 15 * time.Minute
 
 	pingWait      = 30 * time.Second
-	pingDelayStep = 1 * time.Minute
+	pingDelayStep = 30 * time.Second
 	minPingDelay  = 2 * time.Minute
 	maxPingDelay  = 15 * time.Minute
 )
@@ -277,6 +277,7 @@ func (p *Pipe) loop() {
 		case p.pio.ws = <-cPIO.connected:
 			log.Println("websocket connected")
 			p.pio.connected = nil
+			p.notified = false
 			p.retryDelay = 0
 			if !p.pingDelayLocked {
 				p.pingDelay = 0
