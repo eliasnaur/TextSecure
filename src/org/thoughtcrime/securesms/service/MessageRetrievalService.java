@@ -71,11 +71,11 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
   public static final  String ACTION_KEEPALIVE         = "KEEPALIVE";
   public static final  String ACTION_ACTIVITY_STARTED  = "ACTIVITY_STARTED";
   public static final  String ACTION_ACTIVITY_FINISHED = "ACTIVITY_FINISHED";
-  public static final  String ACTION_PUSH_RECEIVED     = "PUSH_RECEIVED";
+//  public static final  String ACTION_PUSH_RECEIVED     = "PUSH_RECEIVED";
 
-  private static final int   REQUEST_TIMEOUT_MINUTES          = 15;
+/*  private static final int   REQUEST_TIMEOUT_MINUTES          = 15;
   private static final int   REQUEST_TIMEOUT_JITTER_MINUTES   = 1;
-
+*/
   private NetworkRequirement         networkRequirement;
   private NetworkRequirementProvider networkRequirementProvider;
 
@@ -198,7 +198,7 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
 
     if      (ACTION_ACTIVITY_STARTED.equals(intent.getAction()))  incrementActive();
     else if (ACTION_ACTIVITY_FINISHED.equals(intent.getAction())) decrementActive();
-    else if (ACTION_PUSH_RECEIVED.equals(intent.getAction()))     incrementPushReceived(intent);
+//    else if (ACTION_PUSH_RECEIVED.equals(intent.getAction()))     incrementPushReceived(intent);
     else if (ACTION_KEEPALIVE.equals(intent.getAction()))         keepAlive(intent);
 
     return START_STICKY;
@@ -225,7 +225,7 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
 			  PushContentReceiveJob receiveJob = new PushContentReceiveJob(this);
 			  receiveJob.handle(envelope, false);
 
-			  decrementPushReceived();
+			  //decrementPushReceived();
 		  }
 	  } catch (IOException | InvalidVersionException e) {
 		  Log.e(TAG, "failed to decode message envelope: " + e.getMessage());
@@ -375,9 +375,11 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
   }*/
 
   @Override
-  public synchronized void onRequirementStatusChanged() {
+  public void onRequirementStatusChanged() {
 	  //waitingForReconnect = false;
-	  notifyPipe();
+	  if (pipe != null) {
+		  pipe.Changed();
+	  }
 	  //notifyAll();
   }
 
@@ -386,36 +388,48 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
     return null;
   }
 
-  private synchronized void incrementActive() {
-	//waitingForReconnect = false;
-    activeActivities++;
-    Log.w(TAG, "Active Count: " + activeActivities);
+  private void incrementActive() {
+	synchronized (this) {
+		//waitingForReconnect = false;
+		activeActivities++;
+		Log.w(TAG, "Active Count: " + activeActivities);
+	}
+	  if (pipe != null) {
+		  pipe.Notify();
+	  }
+    //notifyAll();
+  }
+
+  private void decrementActive() {
+	synchronized (this) {
+		activeActivities--;
+		Log.w(TAG, "Active Count: " + activeActivities);
+	}
+	/*if (pipe != null) {
+		pipe.Notify();
+	}*/
+    //notifyAll();
+  }
+
+/*  private void incrementPushReceived(Intent intent) {
+	synchronized (this) {
+		pushPending.add(intent);
+	}
 	notifyPipe();
     //notifyAll();
   }
 
-  private synchronized void decrementActive() {
-    activeActivities--;
-    Log.w(TAG, "Active Count: " + activeActivities);
-	notifyPipe();
-    //notifyAll();
-  }
-
-  private synchronized void incrementPushReceived(Intent intent) {
-    pushPending.add(intent);
-	notifyPipe();
-    //notifyAll();
-  }
-
-  private synchronized void decrementPushReceived() {
-    if (!pushPending.isEmpty()) {
-      Intent intent = pushPending.remove(0);
-      //GcmBroadcastReceiver.completeWakefulIntent(intent);
+  private void decrementPushReceived() {
+	  synchronized (this) {
+		  if (!pushPending.isEmpty()) {
+			  Intent intent = pushPending.remove(0);
+			  //GcmBroadcastReceiver.completeWakefulIntent(intent);
+			  //notifyAll();
+		  }
+	  }
 	  notifyPipe();
-      //notifyAll();
-    }
   }
-
+*/
   private synchronized boolean isConnectionNecessary() {
     Log.w(TAG, String.format("Network requirement: %s, active activities: %s, push pending: %s",
                              networkRequirement.isPresent(), activeActivities, pushPending.size()/*, waitingForReconnect*/));
@@ -425,7 +439,7 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
            networkRequirement.isPresent()/* && !waitingForReconnect*/;
   }
 
-  private synchronized void waitForConnectionNecessary() {
+  /*private synchronized void waitForConnectionNecessary() {
     try {
       while (!isConnectionNecessary()) wait();
     } catch (InterruptedException e) {
@@ -433,7 +447,7 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
     }
   }
 
-  /*private void shutdown(TextSecureMessagePipe pipe) {
+  private void shutdown(TextSecureMessagePipe pipe) {
     try {
       pipe.shutdown();
     } catch (Throwable t) {
@@ -495,12 +509,6 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
 	  fireKeepAliveIn(ctx, millis);
   }*/
 
-  private void notifyPipe() {
-	  if (pipe != null) {
-		  pipe.Notify();
-	  }
-  }
-
   private void keepAlive(Intent intent) {
 	  try {
 /*	  	Log.i(TAG, "Keep alive prod");
@@ -525,9 +533,8 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
 				return false;
 			}
 		});*/
-		  if (pipe != null) {
+		  if (pipe != null)
 			  pipe.Wakeup();
-		  }
 	  } finally {
 		  WakefulBroadcastReceiver.completeWakefulIntent(intent);
 	  }

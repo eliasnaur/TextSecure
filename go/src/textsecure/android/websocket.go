@@ -14,18 +14,26 @@ import (
 
 type (
 	Pipe struct {
-		url        string
-		certPool   *x509.CertPool
-		creds      CredentialsProvider
-		callbacks  Callbacks
-		closer     chan struct{}
-		waker      chan struct{}
-		notifier   chan struct{}
-		retryDelay time.Duration
-		wl         WakeLock
-		rWL        WakeLock
+		url             string
+		certPool        *x509.CertPool
+		creds           CredentialsProvider
+		callbacks       Callbacks
+		closer          chan struct{}
+		waker           chan struct{}
+		notifier        chan struct{}
+		changer         chan struct{}
+		retryDelay      time.Duration
+		pingDelay       time.Duration
+		pingDelayLocked bool
+		notified        bool
+		lastAct         time.Time
+		pinged          bool
+		pio             *pipeIO
+		wl              WakeLock
+		rWL             WakeLock
 	}
 	pipeIO struct {
+		ponger    chan struct{}
 		closer    chan struct{}
 		ws        *websocket.Conn
 		writer    chan []byte
@@ -53,6 +61,11 @@ type (
 const (
 	minDelay = 1 * time.Second
 	maxDelay = 15 * time.Minute
+
+	pingWait      = 30 * time.Second
+	pingDelayStep = 1 * time.Minute
+	minPingDelay  = 2 * time.Minute
+	maxPingDelay  = 15 * time.Minute
 )
 
 func NewPipe(url string, wl, rWL WakeLock, creds CredentialsProvider, callbacks Callbacks) *Pipe {
@@ -64,6 +77,7 @@ func NewPipe(url string, wl, rWL WakeLock, creds CredentialsProvider, callbacks 
 		callbacks: callbacks,
 		waker:     make(chan struct{}),
 		notifier:  make(chan struct{}),
+		changer:   make(chan struct{}),
 		closer:    make(chan struct{}),
 		wl:        wl,
 		rWL:       rWL,
@@ -79,14 +93,19 @@ func (p *Pipe) AddAcceptedCert(encCert []byte) error {
 	return nil
 }
 
-func (p *Pipe) Notify() {
+func (p *Pipe) Changed() {
 	p.wl.Acquire()
-	p.notifier <- struct{}{}
+	p.changer <- struct{}{}
 }
 
 func (p *Pipe) Wakeup() {
 	p.wl.Acquire()
 	p.waker <- struct{}{}
+}
+
+func (p *Pipe) Notify() {
+	p.wl.Acquire()
+	p.notifier <- struct{}{}
 }
 
 func (p *Pipe) Shutdown() {
@@ -130,6 +149,10 @@ func (p *pipeIO) readLoop() {
 			p.commErr <- err
 			return
 		}
+		select {
+		case p.ponger <- struct{}{}:
+		default:
+		}
 		if resp := p.callbacks.OnMessage(payload); resp != nil {
 			select {
 			case p.writer <- resp:
@@ -163,68 +186,133 @@ func (p *pipeIO) close() {
 	close(p.closer)
 }
 
+func (p *Pipe) newPipeIO() *pipeIO {
+	return &pipeIO{
+		writer:    make(chan []byte),
+		commErr:   make(chan error, 2),
+		connected: make(chan *websocket.Conn, 1),
+		ponger:    make(chan struct{}),
+		closer:    make(chan struct{}),
+		wl:        p.rWL,
+		callbacks: p.callbacks,
+	}
+}
+
+func (p *Pipe) connect() {
+	p.pio = p.newPipeIO()
+	p.pio.wl.Acquire()
+	go p.pio.connecter(p)
+}
+
+func (p *Pipe) ping() {
+	p.pinged = true
+	select {
+	case p.pio.writer <- p.callbacks.NewKeepAliveMessage():
+		log.Println("sent ping")
+	default:
+		log.Println("no ping - write queue full")
+	}
+}
+
+func (p *Pipe) checkTimeout() {
+	now := time.Now()
+	if !p.pinged {
+		p.pingDelay = clampDuration(p.pingDelay, minPingDelay, maxPingDelay)
+		nextPing := p.lastAct.Add(p.pingDelay)
+		if p.notified || now.After(nextPing) {
+			p.ping()
+			p.lastAct = now
+			p.wakeupIn(pingWait)
+		} else {
+			p.wakeupIn(nextPing.Sub(now))
+		}
+	} else {
+		timeout := p.lastAct.Add(pingWait)
+		if now.After(timeout) {
+			p.pio.close()
+			p.pio = nil
+			p.pingDelay -= pingDelayStep
+			p.pingDelayLocked = true
+			log.Printf("decreased websocket timeout to %s", p.pingDelay)
+			return
+		}
+		p.wakeupIn(timeout.Sub(now))
+	}
+}
+
+func (p *Pipe) pong() {
+	if p.pinged && !p.pingDelayLocked && !p.notified {
+		p.pingDelay += pingDelayStep
+		log.Printf("increased websocket timeout to %s", p.pingDelay)
+	}
+	p.notified = false
+	p.pinged = false
+	p.lastAct = time.Now()
+}
+
+func (p *Pipe) wakeupIn(d time.Duration) {
+	p.callbacks.WakeupIn(int64(d))
+}
+
 func (p *Pipe) loop() {
 	defer log.Println("exiting websocket loop")
 	defer p.wl.Release()
-	var pio *pipeIO
 	for {
 		if p.callbacks.ConnectionRequired() {
-			if pio == nil {
-				pio = &pipeIO{
-					writer:    make(chan []byte),
-					commErr:   make(chan error, 2),
-					connected: make(chan *websocket.Conn, 1),
-					closer:    make(chan struct{}),
-					wl:        p.rWL,
-					callbacks: p.callbacks,
+			if p.pio == nil {
+				p.connect()
+			} else if p.pio.ws != nil {
+				p.checkTimeout()
+				if p.pio == nil {
+					continue
 				}
-				pio.wl.Acquire()
-				go pio.connecter(p)
 			}
-			/*if p.ws != nil {
-				p.callbacks.WakeupIn(p.keepAliveDelay)
-			}*/
 		}
 		p.wl.Release()
 		var cPIO pipeIO
-		if pio != nil {
-			cPIO = *pio
+		if p.pio != nil {
+			cPIO = *p.pio
 		}
 		select {
-		case pio.ws = <-cPIO.connected:
+		case p.pio.ws = <-cPIO.connected:
 			log.Println("websocket connected")
-			pio.connected = nil
+			p.pio.connected = nil
 			p.retryDelay = 0
-			go pio.readLoop()
-			go pio.writeLoop()
+			if !p.pingDelayLocked {
+				p.pingDelay = 0
+			}
+			p.pong()
+			go p.pio.readLoop()
+			go p.pio.writeLoop()
+		case <-cPIO.ponger:
+			log.Println("websocket read activity")
+			p.pong()
 		case err := <-cPIO.commErr:
 			log.Println("websocket failed: ", err)
-			pio.close()
-			pio = nil
-			p.retryDelay = clampDelay(2*p.retryDelay, minDelay, maxDelay)
-			p.callbacks.WakeupIn(int64(p.retryDelay))
+			p.pio.close()
+			p.pio = nil
+			p.retryDelay = clampDuration(2*p.retryDelay, minDelay, maxDelay)
+			p.wakeupIn(p.retryDelay)
 			p.rWL.Release()
 		case <-p.closer:
-			if pio != nil {
-				pio.close()
+			if p.pio != nil {
+				p.pio.close()
 			}
 			return
+		case <-p.changer:
+			log.Println("websocket change event")
+			p.pingDelay = 0
+			p.pingDelayLocked = false
 		case <-p.notifier:
+			p.notified = true
 			log.Println("websocket notified")
 		case <-p.waker:
 			log.Println("websocket woke up")
-			if pio == nil {
-				break
-			}
-			select {
-			case pio.writer <- p.callbacks.NewKeepAliveMessage():
-			default: // Write queue is full
-			}
 		}
 	}
 }
 
-func clampDelay(d, min, max time.Duration) time.Duration {
+func clampDuration(d, min, max time.Duration) time.Duration {
 	if d < min {
 		return min
 	}
