@@ -191,13 +191,7 @@ func (p *Pipe) loop() {
 			log.Println("websocket failed: ", err)
 			pio.close()
 			pio = nil
-			p.retryDelay = 2 * p.retryDelay
-			if d := p.retryDelay; d < minDelay {
-				p.retryDelay = minDelay
-			}
-			if d := p.retryDelay; d > maxDelay {
-				p.retryDelay = maxDelay
-			}
+			p.retryDelay = clampDelay(2*p.retryDelay, minDelay, maxDelay)
 			p.callbacks.WakeupIn(int64(p.retryDelay))
 			p.rWL.Release()
 		case <-p.closer:
@@ -212,11 +206,20 @@ func (p *Pipe) loop() {
 			}
 			select {
 			case pio.writer <- p.callbacks.NewKeepAliveMessage():
-			default:
-				// Write queue is full
+			default: // Write queue is full
 			}
 		}
 	}
+}
+
+func clampDelay(d, min, max time.Duration) time.Duration {
+	if d < min {
+		return min
+	}
+	if d > max {
+		return max
+	}
+	return d
 }
 
 func decodeCert(encCert []byte) (*x509.Certificate, error) {
