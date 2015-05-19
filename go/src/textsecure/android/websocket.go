@@ -251,6 +251,7 @@ func (p *Pipe) pong() {
 }
 
 func (p *Pipe) wakeupIn(d time.Duration) {
+	log.Println("waiting for %s", d)
 	p.callbacks.WakeupIn(int64(d))
 }
 
