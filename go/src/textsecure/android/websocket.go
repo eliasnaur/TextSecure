@@ -3,12 +3,12 @@ package android
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
 
+	"bitbucket.org/elias/android/log"
 	"github.com/gorilla/websocket"
 )
 
@@ -67,6 +67,10 @@ const (
 	minPingDelay  = 2 * time.Minute
 	maxPingDelay  = 15 * time.Minute
 )
+
+func InitLog(host, dir string) {
+	log.Init(host, dir)
+}
 
 func NewPipe(url string, wl, rWL WakeLock, creds CredentialsProvider, callbacks Callbacks) *Pipe {
 	url = strings.Replace(url, "https://", "wss://", 1) + "/v1/websocket/"
