@@ -14,23 +14,24 @@ import (
 
 type (
 	Pipe struct {
-		url             string
-		certPool        *x509.CertPool
-		creds           CredentialsProvider
-		callbacks       Callbacks
-		closer          chan struct{}
-		waker           chan struct{}
-		notifier        chan struct{}
-		changer         chan struct{}
-		retryDelay      time.Duration
-		pingDelay       time.Duration
-		pingDelayLocked bool
-		notified        bool
-		lastAct         time.Time
-		pinged          bool
-		pio             *pipeIO
-		wl              WakeLock
-		rWL             WakeLock
+		url        string
+		certPool   *x509.CertPool
+		creds      CredentialsProvider
+		callbacks  Callbacks
+		closer     chan struct{}
+		waker      chan struct{}
+		notifier   chan struct{}
+		changer    chan struct{}
+		retryDelay time.Duration
+		pingDelay  time.Duration
+		minPongs   int
+		pongs      int
+		notified   bool
+		lastAct    time.Time
+		pinged     bool
+		pio        *pipeIO
+		wl         WakeLock
+		rWL        WakeLock
 	}
 	pipeIO struct {
 		ponger    chan struct{}
@@ -85,6 +86,7 @@ func NewPipe(url string, wl, rWL WakeLock, creds CredentialsProvider, callbacks 
 		closer:    make(chan struct{}),
 		wl:        wl,
 		rWL:       rWL,
+		minPongs:  1,
 	}
 }
 
@@ -236,10 +238,10 @@ func (p *Pipe) checkTimeout() {
 		if now.After(timeout) {
 			p.pio.close()
 			p.pio = nil
-			if !p.pingDelayLocked {
+			if p.pongs == 0 {
 				p.pingDelay -= pingDelayStep
-				p.pingDelayLocked = true
-				log.Printf("decreased websocket timeout to %s", p.pingDelay)
+				p.minPongs *= 2
+				log.Printf("decreased websocket timeout to %s, min pongs %d", p.pingDelay, p.minPongs)
 			}
 			return
 		}
@@ -248,9 +250,13 @@ func (p *Pipe) checkTimeout() {
 }
 
 func (p *Pipe) pong() {
-	if p.pinged && !p.pingDelayLocked && !p.notified {
-		p.pingDelay += pingDelayStep
-		log.Printf("increased websocket timeout to %s", p.pingDelay)
+	if p.pinged && !p.notified {
+		p.pongs++
+		if p.pongs >= p.minPongs {
+			p.pingDelay += pingDelayStep
+			p.pongs = 0
+			log.Printf("increased websocket timeout to %s", p.pingDelay)
+		}
 	}
 	p.notified = false
 	p.pinged = false
@@ -287,9 +293,6 @@ func (p *Pipe) loop() {
 			p.pio.connected = nil
 			p.notified = false
 			p.retryDelay = 0
-			if !p.pingDelayLocked {
-				p.pingDelay = 0
-			}
 			p.pong()
 			go p.pio.readLoop()
 			go p.pio.writeLoop()
@@ -310,8 +313,10 @@ func (p *Pipe) loop() {
 			return
 		case <-p.changer:
 			log.Println("websocket change event")
+			p.notified = true
 			p.pingDelay = 0
-			p.pingDelayLocked = false
+			p.minPongs = 1
+			p.pongs = 0
 		case <-p.notifier:
 			p.notified = true
 			log.Println("websocket notified")
