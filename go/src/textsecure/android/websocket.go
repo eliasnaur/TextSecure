@@ -235,8 +235,8 @@ func (p *Pipe) checkTimeout() {
 			if !p.pingDelayLocked {
 				p.pingDelay -= pingDelayStep
 				p.pingDelayLocked = true
+				log.Printf("decreased websocket timeout to %s", p.pingDelay)
 			}
-			log.Printf("decreased websocket timeout to %s", p.pingDelay)
 			return
 		}
 		p.wakeupIn(timeout.Sub(now))
