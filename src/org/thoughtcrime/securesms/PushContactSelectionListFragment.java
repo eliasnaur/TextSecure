@@ -123,7 +123,7 @@ public class PushContactSelectionListFragment extends    Fragment
     final ContactData contactData = new ContactData(data.id, data.name);
     final CharSequence label = ContactsContract.CommonDataKinds.Phone.getTypeLabel(getResources(),
                                                                                    data.numberType, "");
-    contactData.numbers.add(new ContactAccessor.NumberData(label.toString(), data.label));
+    contactData.numbers.add(new ContactAccessor.NumberData(label.toString(), data.number));
     if (multi) {
       selectedContacts.put(contactData.id, contactData);
     }
