@@ -156,6 +156,7 @@ func (p *pipeIO) readLoop() {
 		if resp := p.callbacks.OnMessage(payload); resp != nil {
 			select {
 			case p.writer <- resp:
+				log.Println("wrote response")
 			case <-p.closer:
 				return
 			}
