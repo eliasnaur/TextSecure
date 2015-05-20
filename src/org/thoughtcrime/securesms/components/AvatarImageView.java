@@ -33,12 +33,12 @@ public class AvatarImageView extends ImageView {
         public void onClick(View v) {
           if (recipient.getContactUri() != null) {
             ContactsContract.QuickContact.showQuickContact(getContext(), AvatarImageView.this, recipient.getContactUri(), ContactsContract.QuickContact.MODE_LARGE, null);
-          } else {
+          } /*else {
             final Intent intent = new Intent(Intent.ACTION_INSERT_OR_EDIT);
             intent.putExtra(ContactsContract.Intents.Insert.PHONE, recipient.getNumber());
             intent.setType(ContactsContract.Contacts.CONTENT_ITEM_TYPE);
             getContext().startActivity(intent);
-          }
+          }*/
         }
       });
     } else {

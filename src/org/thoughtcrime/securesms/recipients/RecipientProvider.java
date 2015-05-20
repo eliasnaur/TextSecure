@@ -50,7 +50,7 @@ public class RecipientProvider {
     PhoneLookup.DISPLAY_NAME,
     PhoneLookup.LOOKUP_KEY,
     PhoneLookup._ID,
-	CommonDataKinds.Nickname.DATA1
+	CommonDataKinds.Nickname.NAME
     //PhoneLookup.NUMBER
   };
 
@@ -133,7 +133,7 @@ public class RecipientProvider {
     Cursor cursor = context.getContentResolver().query(uri, CALLER_ID_PROJECTION,
                                                        null, null, null);*/
     Cursor cursor = context.getContentResolver().query(Data.CONTENT_URI, CALLER_ID_PROJECTION,
-			CommonDataKinds.Nickname.DATA1 + "=?", new String[]{number}, null);
+			CommonDataKinds.Nickname.NAME + "=?", new String[]{number}, null);
 
     try {
       if (cursor != null && cursor.moveToFirst()) {

@@ -176,7 +176,7 @@ public class TextSecureDirectory {
 
     try {
       //cursor = context.getContentResolver().query(uri, new String[] {Phone.NUMBER}, null, null, null);
-      cursor = context.getContentResolver().query(uri, new String[] {Nickname.DATA1}, null, null, null);
+      cursor = context.getContentResolver().query(uri, new String[] {Nickname.NAME}, null, null, null);
 
       while (cursor != null && cursor.moveToNext()) {
         final String rawNumber = cursor.getString(0);
