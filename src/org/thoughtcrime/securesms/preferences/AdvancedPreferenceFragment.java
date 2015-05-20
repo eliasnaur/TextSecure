@@ -30,6 +30,11 @@ import org.whispersystems.libaxolotl.util.guava.Optional;
 import org.whispersystems.textsecure.api.TextSecureAccountManager;
 import org.whispersystems.textsecure.api.push.exceptions.AuthorizationFailedException;
 
+import org.thoughtcrime.securesms.ApplicationContext;
+import org.whispersystems.jobqueue.Job;
+import org.whispersystems.jobqueue.JobParameters;
+import org.thoughtcrime.securesms.database.DatabaseFactory;
+
 import java.io.IOException;
 
 public class AdvancedPreferenceFragment extends PreferenceFragment {
@@ -37,6 +42,7 @@ public class AdvancedPreferenceFragment extends PreferenceFragment {
 
   private static final String PUSH_MESSAGING_PREF   = "pref_toggle_push_messaging";
   private static final String SUBMIT_DEBUG_LOG_PREF = "pref_submit_debug_logs";
+  private static final String CLEAR_ALL_MESSAGES_PREF = "pref_clear_all_messages";
 
   private static final int PICK_IDENTITY_CONTACT = 1;
 
@@ -53,6 +59,8 @@ public class AdvancedPreferenceFragment extends PreferenceFragment {
 
     this.findPreference(SUBMIT_DEBUG_LOG_PREF)
       .setOnPreferenceClickListener(new SubmitDebugLogListener());
+    this.findPreference(CLEAR_ALL_MESSAGES_PREF)
+      .setOnPreferenceClickListener(new ClearAllMessagesListener());
   }
 
   @Override
@@ -121,6 +129,39 @@ public class AdvancedPreferenceFragment extends PreferenceFragment {
     public boolean onPreferenceClick(Preference preference) {
       final Intent intent = new Intent(getActivity(), LogSubmitActivity.class);
       startActivity(intent);
+      return true;
+    }
+  }
+
+  private class ClearAllMessagesListener implements Preference.OnPreferenceClickListener {
+    @Override public boolean onPreferenceClick(Preference preference) {
+      AlertDialogWrapper.Builder builder = new AlertDialogWrapper.Builder(getActivity());
+      builder.setTitle(R.string.ApplicationPreferencesActivity_clear_all_messages);
+      builder.setMessage(getString(R.string.ApplicationPreferencesActivity_are_you_sure_you_would_like_to_immediately_delete_all_conversation_threads));
+      builder.setPositiveButton(R.string.ApplicationPreferencesActivity_delete,
+        new DialogInterface.OnClickListener() {
+          @Override
+          public void onClick(DialogInterface dialog, int which) {
+			final ApplicationContext ctx = ApplicationContext.getInstance(getActivity());
+			ctx.getJobManager().add(new Job(JobParameters.newBuilder()
+						.withWakeLock(true)
+						.create()) {
+				@Override public void onRun() throws Exception {
+					DatabaseFactory.getThreadDatabase(ctx).deleteAllConversations();
+					Log.w(TAG, "All converstations deleted");
+				}
+				@Override public void onCanceled() {}
+				@Override public void onAdded() {}
+				@Override public boolean onShouldRetry(Exception e) {
+					return false;
+				}
+			});
+          }
+        });
+
+      builder.setNegativeButton(android.R.string.cancel, null);
+      builder.show();
+
       return true;
     }
   }

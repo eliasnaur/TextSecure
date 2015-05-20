@@ -14,18 +14,5 @@ public class BootCompletedReceiver extends WakefulBroadcastReceiver {
     @Override public void onReceive(final Context context, Intent intent) {
         Intent service = new Intent(MessageRetrievalService.ACTION_INIT, null, context, MessageRetrievalService.class);
         WakefulBroadcastReceiver.startWakefulService(context, service);
-		ApplicationContext.getInstance(context).getJobManager().add(new Job(JobParameters.newBuilder()
-					.withWakeLock(true)
-					.create()) {
-			@Override public void onRun() throws Exception {
-				DatabaseFactory.getThreadDatabase(context).deleteAllConversations();
-				Log.w("BootCompletedReceiver", "All converstations deleted");
-			}
-			@Override public void onCanceled() {}
-			@Override public void onAdded() {}
-			@Override public boolean onShouldRetry(Exception e) {
-				return false;
-			}
-		});
     }
 }
