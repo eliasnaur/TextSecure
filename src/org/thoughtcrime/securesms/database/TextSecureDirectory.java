@@ -187,7 +187,6 @@ public class TextSecureDirectory {
           } catch (InvalidNumberException e) {
             Log.w("Directory", "Invalid number: " + rawNumber);
           }*/
-		  Log.i("Directory", "Adding nickname " + rawNumber);
 		  results.add(rawNumber);
         }
       }

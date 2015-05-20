@@ -179,7 +179,7 @@ public class PushContactSelectionListFragment extends    Fragment
 
   @Override
   public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-	final Context context = getActivity();
+/*	final Context context = getActivity();
 	final String filter = cursorFilter;
 	return new CursorLoader(getActivity()) {
 		@Override public Cursor loadInBackground() {
@@ -213,10 +213,10 @@ public class PushContactSelectionListFragment extends    Fragment
 			}
 			return newNumberCursor;
 		}
-	};
-/*    if (getActivity().getIntent().getBooleanExtra(PushContactSelectionActivity.PUSH_ONLY_EXTRA, false)) {
+	};*/
+    //if (getActivity().getIntent().getBooleanExtra(PushContactSelectionActivity.PUSH_ONLY_EXTRA, false)) {
       return ContactAccessor.getInstance().getCursorLoaderForPushContacts(getActivity(), cursorFilter);
-    } else {
+    /*} else {
       return ContactAccessor.getInstance().getCursorLoaderForContacts(getActivity(), cursorFilter);
     }*/
   }

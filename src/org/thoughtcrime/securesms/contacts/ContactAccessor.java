@@ -102,8 +102,10 @@ public class ContactAccessor {
     final Collection<ContactData> lookupData = new ArrayList<ContactData>(pushNumbers.size());
 
     for (String pushNumber : pushNumbers) {
-      Uri uri = Uri.withAppendedPath(PhoneLookup.CONTENT_FILTER_URI, Uri.encode(pushNumber));
-      Cursor lookupCursor = resolver.query(uri, inProjection, null, null, null);
+      //Uri uri = Uri.withAppendedPath(PhoneLookup.CONTENT_FILTER_URI, Uri.encode(pushNumber));
+      //Cursor lookupCursor = resolver.query(uri, inProjection, null, null, null);
+      Cursor lookupCursor = resolver.query(ContactsContract.Data.CONTENT_URI, inProjection,
+			  ContactsContract.CommonDataKinds.Nickname.DATA1 + "=?", new String[]{pushNumber}, null);
       try {
         if (lookupCursor != null && lookupCursor.moveToFirst()) {
           final ContactData contactData = new ContactData(lookupCursor.getLong(0), lookupCursor.getString(1));
