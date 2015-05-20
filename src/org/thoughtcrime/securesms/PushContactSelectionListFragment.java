@@ -81,9 +81,6 @@ public class PushContactSelectionListFragment extends    Fragment
   private EditText                  filterEditText;
   private String                    cursorFilter;
 
-  private TextSecureAccountManager  accountManager;
-  private TextSecureDirectory       directory;
-
   @Override
   public void onActivityCreated(Bundle icicle) {
     super.onCreate(icicle);
@@ -144,8 +141,6 @@ public class PushContactSelectionListFragment extends    Fragment
   }
 
   private void initializeResources() {
-	accountManager = TextSecureCommunicationFactory.createManager(getActivity());
-  	directory = TextSecureDirectory.getInstance(getActivity());
     emptyText = (TextView) getView().findViewById(android.R.id.empty);
     listView  = (StickyListHeadersListView) getView().findViewById(android.R.id.list);
     listView.setFocusable(true);
@@ -179,41 +174,6 @@ public class PushContactSelectionListFragment extends    Fragment
 
   @Override
   public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-/*	final Context context = getActivity();
-	final String filter = cursorFilter;
-	return new CursorLoader(getActivity()) {
-		@Override public Cursor loadInBackground() {
-			MatrixCursor newNumberCursor = new MatrixCursor(new String[]{
-				ContactsContract.CommonDataKinds.Phone._ID,
-				ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
-				ContactsContract.CommonDataKinds.Phone.TYPE,
-				ContactsContract.CommonDataKinds.Phone.NUMBER,
-				ContactsContract.CommonDataKinds.Phone.LABEL,
-				"type"
-			}, 1);
-			try {
-				if (filter != null) {
-					Recipients r = RecipientFactory.getRecipientsFromString(context, filter, false);
-					if (!DirectoryHelper.isPushDestination(context, r)) {
-						List<ContactTokenDetails> activeTokens = accountManager.getContacts(Collections.singleton(filter));
-						if (activeTokens != null && activeTokens.size() > 0) {
-							for (ContactTokenDetails activeToken : activeTokens) {
-								activeToken.setNumber(activeToken.getNumber());
-							}
-							directory.setNumbers(activeTokens, Collections.<String>emptySet());
-						}
-					}
-					if (DirectoryHelper.isPushDestination(context, r)) {
-						newNumberCursor.addRow(new Object[]{-1L, context.getString(R.string.contact_selection_list__unknown_contact),
-							ContactsContract.CommonDataKinds.Phone.TYPE_CUSTOM, "\u21e2", filter, ContactsDatabase.NORMAL_TYPE});
-					}
-				}
-			} catch (IOException e) {
-				Log.e(TAG, "failed to fetch contact tokens " + e.getMessage());
-			}
-			return newNumberCursor;
-		}
-	};*/
     //if (getActivity().getIntent().getBooleanExtra(PushContactSelectionActivity.PUSH_ONLY_EXTRA, false)) {
       return ContactAccessor.getInstance().getCursorLoaderForPushContacts(getActivity(), cursorFilter);
     /*} else {

@@ -36,7 +36,16 @@ import org.thoughtcrime.securesms.util.TextSecurePreferences;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+
+import org.thoughtcrime.securesms.push.TextSecureCommunicationFactory;
+import org.thoughtcrime.securesms.database.TextSecureDirectory;
+import org.thoughtcrime.securesms.recipients.Recipients;
+import org.thoughtcrime.securesms.recipients.RecipientFactory;
+import org.thoughtcrime.securesms.util.DirectoryHelper;
+import org.whispersystems.textsecure.api.TextSecureAccountManager;
+import org.whispersystems.textsecure.api.push.ContactTokenDetails;
 
 /**
  * Database to supply all types of contacts that TextSecure needs to know about
@@ -102,8 +111,28 @@ public class ContactsDatabase {
 
     if (!TextUtils.isEmpty(filter) && NumberUtil.isValidSmsOrEmail(filter)) {
       newNumberCursor = new MatrixCursor(CONTACTS_PROJECTION, 1);
-      newNumberCursor.addRow(new Object[]{-1L, context.getString(R.string.contact_selection_list__unknown_contact),
-                             ContactsContract.CommonDataKinds.Phone.TYPE_CUSTOM, "\u21e2", filter, NORMAL_TYPE});
+      /*newNumberCursor.addRow(new Object[]{-1L, context.getString(R.string.contact_selection_list__unknown_contact),
+                             ContactsContract.CommonDataKinds.Phone.TYPE_CUSTOM, "\u21e2", filter, NORMAL_TYPE});*/
+	  Recipients r = RecipientFactory.getRecipientsFromString(context, filter, false);
+	  if (!DirectoryHelper.isPushDestination(context, r) && (localCursor == null || !localCursor.moveToFirst())) {
+		  TextSecureAccountManager  accountManager = TextSecureCommunicationFactory.createManager(context);
+		  TextSecureDirectory       directory = TextSecureDirectory.getInstance(context);
+		  try {
+			  List<ContactTokenDetails> activeTokens = accountManager.getContacts(Collections.singleton(filter));
+			  if (activeTokens != null && activeTokens.size() > 0) {
+				  for (ContactTokenDetails activeToken : activeTokens) {
+					  activeToken.setNumber(activeToken.getNumber());
+				  }
+				  directory.setNumbers(activeTokens, Collections.<String>emptySet());
+			  }
+		  } catch (IOException e) {
+			  Log.i(TAG, "Failed to lookup token for " + filter + ": " + e.getMessage());
+		  }
+	  }
+	  if (DirectoryHelper.isPushDestination(context, r)) {
+		  newNumberCursor.addRow(new Object[]{-1L, context.getString(R.string.contact_selection_list__unknown_contact),
+			  ContactsContract.CommonDataKinds.Phone.TYPE_CUSTOM, "\u21e2", filter, ContactsDatabase.NORMAL_TYPE});
+	  }
     } else {
       newNumberCursor = null;
     }
