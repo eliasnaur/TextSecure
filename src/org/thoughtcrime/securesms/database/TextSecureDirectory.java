@@ -6,7 +6,8 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.net.Uri;
-import android.provider.ContactsContract.CommonDataKinds.Phone;
+import android.provider.ContactsContract.Data;
+import android.provider.ContactsContract.CommonDataKinds.Nickname;
 import android.util.Log;
 
 import org.whispersystems.textsecure.api.push.ContactTokenDetails;
@@ -168,22 +169,26 @@ public class TextSecureDirectory {
   }
 
   public Set<String> getPushEligibleContactNumbers(String localNumber) {
-    final Uri         uri     = Phone.CONTENT_URI;
+    //final Uri         uri     = Phone.CONTENT_URI;
+    final Uri         uri     = Data.CONTENT_URI;
     final Set<String> results = new HashSet<String>();
           Cursor      cursor  = null;
 
     try {
-      cursor = context.getContentResolver().query(uri, new String[] {Phone.NUMBER}, null, null, null);
+      //cursor = context.getContentResolver().query(uri, new String[] {Phone.NUMBER}, null, null, null);
+      cursor = context.getContentResolver().query(uri, new String[] {Nickname.DATA1}, null, null, null);
 
       while (cursor != null && cursor.moveToNext()) {
         final String rawNumber = cursor.getString(0);
         if (rawNumber != null) {
-          try {
+/*          try {
             final String e164Number = PhoneNumberFormatter.formatNumber(rawNumber, localNumber);
             results.add(e164Number);
           } catch (InvalidNumberException e) {
             Log.w("Directory", "Invalid number: " + rawNumber);
-          }
+          }*/
+		  Log.i("Directory", "Adding nickname " + rawNumber);
+		  results.add(rawNumber);
         }
       }
 
