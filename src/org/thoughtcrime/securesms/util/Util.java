@@ -24,6 +24,7 @@ import android.graphics.Typeface;
 import android.os.Build;
 import android.os.Build.VERSION;
 import android.os.Build.VERSION_CODES;
+import android.os.Looper;
 import android.provider.Telephony;
 import android.telephony.TelephonyManager;
 import android.text.Spannable;
@@ -296,5 +297,11 @@ public class Util {
   @TargetApi(VERSION_CODES.LOLLIPOP)
   public static boolean isMmsCapable(Context context) {
     return false; //(VERSION.SDK_INT >= VERSION_CODES.LOLLIPOP) || OutgoingLegacyMmsConnection.isConnectionPossible(context);
+  }
+
+  public static void assertMainThread() {
+    if (Looper.myLooper() != Looper.getMainLooper()) {
+      throw new AssertionError("Main-thread assertion failed.");
+    }
   }
 }
