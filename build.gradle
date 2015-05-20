@@ -149,8 +149,8 @@ android {
         targetSdkVersion 22
 
 		applicationId "com.hoenirphone.securesms"
-		versionCode 1002
-		versionName "2.12.0 hoenir b2"
+		versionCode 1004
+		versionName "2.12.0 hoenir b4"
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         buildConfigField "long", "BUILD_TIMESTAMP", System.currentTimeMillis() + "L"
