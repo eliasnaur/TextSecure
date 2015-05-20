@@ -93,7 +93,7 @@ public class NewConversationActivity extends PassphraseRequiredActionBarActivity
   public boolean onOptionsItemSelected(MenuItem item) {
     super.onOptionsItemSelected(item);
     switch (item.getItemId()) {
-//    case R.id.menu_refresh_directory:  handleDirectoryRefresh();  return true;
+    case R.id.menu_refresh_directory:  handleDirectoryRefresh();  return true;
     case R.id.menu_selection_finished: handleSelectionFinished(); return true;
     case android.R.id.home:            finish();                  return true;
     }
