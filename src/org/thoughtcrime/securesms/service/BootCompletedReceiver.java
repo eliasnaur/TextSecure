@@ -12,7 +12,7 @@ import android.support.v4.content.WakefulBroadcastReceiver;
 
 public class BootCompletedReceiver extends WakefulBroadcastReceiver {
     @Override public void onReceive(final Context context, Intent intent) {
-        Intent service = new Intent(MessageRetrievalService.ACTION_KEEPALIVE, null, context, MessageRetrievalService.class);
+        Intent service = new Intent(MessageRetrievalService.ACTION_INIT, null, context, MessageRetrievalService.class);
         WakefulBroadcastReceiver.startWakefulService(context, service);
 		ApplicationContext.getInstance(context).getJobManager().add(new Job(JobParameters.newBuilder()
 					.withWakeLock(true)
