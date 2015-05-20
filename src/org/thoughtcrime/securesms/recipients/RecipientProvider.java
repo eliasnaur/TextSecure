@@ -21,7 +21,9 @@ import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.provider.ContactsContract.Contacts;
+import android.provider.ContactsContract.Data;
 import android.provider.ContactsContract.PhoneLookup;
+import android.provider.ContactsContract.CommonDataKinds;
 import android.util.Log;
 
 import org.thoughtcrime.securesms.contacts.ContactPhotoFactory;
@@ -48,7 +50,8 @@ public class RecipientProvider {
     PhoneLookup.DISPLAY_NAME,
     PhoneLookup.LOOKUP_KEY,
     PhoneLookup._ID,
-    PhoneLookup.NUMBER
+	CommonDataKinds.Nickname.DATA1
+    //PhoneLookup.NUMBER
   };
 
   public Recipient getRecipient(Context context, long recipientId, boolean asynchronous) {
@@ -126,9 +129,11 @@ public class RecipientProvider {
   }
 
   private RecipientDetails getRecipientDetails(Context context, String number) {
-    Uri uri       = Uri.withAppendedPath(PhoneLookup.CONTENT_FILTER_URI, Uri.encode(number));
+    /*Uri uri       = Uri.withAppendedPath(PhoneLookup.CONTENT_FILTER_URI, Uri.encode(number));
     Cursor cursor = context.getContentResolver().query(uri, CALLER_ID_PROJECTION,
-                                                       null, null, null);
+                                                       null, null, null);*/
+    Cursor cursor = context.getContentResolver().query(Data.CONTENT_URI, CALLER_ID_PROJECTION,
+			CommonDataKinds.Nickname.DATA1 + "=?", new String[]{number}, null);
 
     try {
       if (cursor != null && cursor.moveToFirst()) {
