@@ -321,10 +321,10 @@ func (p *Pipe) loop() {
 			p.pingDelay = 0
 			p.minPongs = 1
 			p.pongs = 0
+			p.retryDelay = 0
 		case <-p.notifier:
 			log.Println("websocket notified")
 			p.notified = true
-			p.retryDelay = 0
 			p.checkConnect()
 		case <-p.waker:
 			log.Println("websocket woke up")
