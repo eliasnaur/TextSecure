@@ -268,18 +268,23 @@ func (p *Pipe) wakeupIn(d time.Duration) {
 	p.callbacks.WakeupIn(int64(d))
 }
 
+func (p *Pipe) checkConnect() {
+	if p.callbacks.ConnectionRequired() && p.pio == nil {
+		p.connect()
+	}
+}
+
 func (p *Pipe) loop() {
 	defer log.Println("exiting websocket loop")
 	defer p.wl.Release()
 	for {
 		if p.callbacks.ConnectionRequired() {
-			if p.pio == nil {
-				p.connect()
-			} else if p.pio.ws != nil {
-				p.checkTimeout()
-				if p.pio == nil {
-					continue
+			if p.pio != nil {
+				if p.pio.ws != nil {
+					p.checkTimeout()
 				}
+			} else {
+				p.wakeupIn(p.retryDelay)
 			}
 		}
 		p.wl.Release()
@@ -304,7 +309,6 @@ func (p *Pipe) loop() {
 			p.pio.close()
 			p.pio = nil
 			p.retryDelay = clampDuration(2*p.retryDelay, minDelay, maxDelay)
-			p.wakeupIn(p.retryDelay)
 			p.rWL.Release()
 		case <-p.closer:
 			if p.pio != nil {
@@ -318,10 +322,13 @@ func (p *Pipe) loop() {
 			p.minPongs = 1
 			p.pongs = 0
 		case <-p.notifier:
-			p.notified = true
 			log.Println("websocket notified")
+			p.notified = true
+			p.retryDelay = 0
+			p.checkConnect()
 		case <-p.waker:
 			log.Println("websocket woke up")
+			p.checkConnect()
 		}
 	}
 }
