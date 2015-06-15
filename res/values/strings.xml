@@ -676,7 +676,7 @@
         the TextSecure server. Try another network or mobile data.
     </string>
     <string name="registration_progress_activity__textsecure_will_now_automatically_verify_your_number_with_a_confirmation_sms_message">
-        TextSecure will now automatically verify your number with a confirmation SMS message.
+        TextSecure will now verify that your handle is available.
     </string>
 	<string name="registration_progress_activity__connecting">Connecting...</string>
 
