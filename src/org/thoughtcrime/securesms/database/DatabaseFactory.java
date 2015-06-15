@@ -60,7 +60,9 @@ public class DatabaseFactory {
   private static final int INTRODUCED_PART_DATA_SIZE_VERSION  = 14;
   private static final int INTRODUCED_THUMBNAILS_VERSION      = 15;
   private static final int INTRODUCED_IDENTITY_COLUMN_VERSION = 16;
-  private static final int DATABASE_VERSION                   = 16;
+  private static final int INTRODUCED_UNIQUE_PART_IDS_VERSION = 17;
+  private static final int INTRODUCED_RECIPIENT_PREFS_DB      = 18;
+  private static final int DATABASE_VERSION                   = 18;
 
   private static final String DATABASE_NAME    = "messages.db";
   private static final Object lock             = new Object();
@@ -81,11 +83,12 @@ public class DatabaseFactory {
   private final DraftDatabase draftDatabase;
   private final PushDatabase pushDatabase;
   private final GroupDatabase groupDatabase;
+  private final RecipientPreferenceDatabase recipientPreferenceDatabase;
 
   public static DatabaseFactory getInstance(Context context) {
     synchronized (lock) {
       if (instance == null)
-        instance = new DatabaseFactory(context);
+        instance = new DatabaseFactory(context.getApplicationContext());
 
       return instance;
     }
@@ -139,20 +142,25 @@ public class DatabaseFactory {
     return getInstance(context).groupDatabase;
   }
 
+  public static RecipientPreferenceDatabase getRecipientPreferenceDatabase(Context context) {
+    return getInstance(context).recipientPreferenceDatabase;
+  }
+
   private DatabaseFactory(Context context) {
-    this.databaseHelper   = new DatabaseHelper(context, DATABASE_NAME, null, DATABASE_VERSION);
-    this.sms              = new SmsDatabase(context, databaseHelper);
-    this.encryptingSms    = new EncryptingSmsDatabase(context, databaseHelper);
-    this.mms              = new MmsDatabase(context, databaseHelper);
-    this.part             = new PartDatabase(context, databaseHelper);
-    this.thread           = new ThreadDatabase(context, databaseHelper);
-    this.address          = CanonicalAddressDatabase.getInstance(context);
-    this.mmsAddress       = new MmsAddressDatabase(context, databaseHelper);
-    this.mmsSmsDatabase   = new MmsSmsDatabase(context, databaseHelper);
-    this.identityDatabase = new IdentityDatabase(context, databaseHelper);
-    this.draftDatabase    = new DraftDatabase(context, databaseHelper);
-    this.pushDatabase     = new PushDatabase(context, databaseHelper);
-    this.groupDatabase    = new GroupDatabase(context, databaseHelper);
+    this.databaseHelper              = new DatabaseHelper(context, DATABASE_NAME, null, DATABASE_VERSION);
+    this.sms                         = new SmsDatabase(context, databaseHelper);
+    this.encryptingSms               = new EncryptingSmsDatabase(context, databaseHelper);
+    this.mms                         = new MmsDatabase(context, databaseHelper);
+    this.part                        = new PartDatabase(context, databaseHelper);
+    this.thread                      = new ThreadDatabase(context, databaseHelper);
+    this.address                     = CanonicalAddressDatabase.getInstance(context);
+    this.mmsAddress                  = new MmsAddressDatabase(context, databaseHelper);
+    this.mmsSmsDatabase              = new MmsSmsDatabase(context, databaseHelper);
+    this.identityDatabase            = new IdentityDatabase(context, databaseHelper);
+    this.draftDatabase               = new DraftDatabase(context, databaseHelper);
+    this.pushDatabase                = new PushDatabase(context, databaseHelper);
+    this.groupDatabase               = new GroupDatabase(context, databaseHelper);
+    this.recipientPreferenceDatabase = new RecipientPreferenceDatabase(context, databaseHelper);
   }
 
   public void reset(Context context) {
@@ -170,6 +178,7 @@ public class DatabaseFactory {
     this.draftDatabase.reset(databaseHelper);
     this.pushDatabase.reset(databaseHelper);
     this.groupDatabase.reset(databaseHelper);
+    this.recipientPreferenceDatabase.reset(databaseHelper);
     old.close();
 
     this.address.reset(context);
@@ -479,6 +488,7 @@ public class DatabaseFactory {
       db.execSQL(DraftDatabase.CREATE_TABLE);
       db.execSQL(PushDatabase.CREATE_TABLE);
       db.execSQL(GroupDatabase.CREATE_TABLE);
+      db.execSQL(RecipientPreferenceDatabase.CREATE_TABLE);
 
       executeStatements(db, SmsDatabase.CREATE_INDEXS);
       executeStatements(db, MmsDatabase.CREATE_INDEXS);
@@ -715,6 +725,16 @@ public class DatabaseFactory {
         db.execSQL("ALTER TABLE sms ADD COLUMN mismatched_identities TEXT");
         db.execSQL("ALTER TABLE mms ADD COLUMN mismatched_identities TEXT");
         db.execSQL("ALTER TABLE mms ADD COLUMN network_failures TEXT");
+      }
+
+      if (oldVersion < INTRODUCED_UNIQUE_PART_IDS_VERSION) {
+        db.execSQL("ALTER TABLE part ADD COLUMN unique_id INTEGER NOT NULL DEFAULT 0");
+      }
+
+      if (oldVersion < INTRODUCED_RECIPIENT_PREFS_DB) {
+        db.execSQL("CREATE TABLE recipient_preferences " +
+                   "(_id INTEGER PRIMARY KEY, recipient_ids TEXT UNIQUE, block INTEGER DEFAULT 0, " +
+                   "notification TEXT DEFAULT NULL, vibrate INTEGER DEFAULT 0, mute_until INTEGER DEFAULT 0)");
       }
 
       db.setTransactionSuccessful();

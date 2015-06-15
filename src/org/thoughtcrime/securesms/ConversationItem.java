@@ -43,6 +43,7 @@ import org.thoughtcrime.securesms.database.DatabaseFactory;
 import org.thoughtcrime.securesms.database.MmsDatabase;
 import org.thoughtcrime.securesms.database.MmsSmsDatabase;
 import org.thoughtcrime.securesms.database.SmsDatabase;
+import org.thoughtcrime.securesms.database.documents.IdentityKeyMismatch;
 import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord;
 import org.thoughtcrime.securesms.database.model.MessageRecord;
 import org.thoughtcrime.securesms.database.model.NotificationMmsMessageRecord;
@@ -52,6 +53,7 @@ import org.thoughtcrime.securesms.mms.Slide;
 import org.thoughtcrime.securesms.recipients.Recipient;
 import org.thoughtcrime.securesms.util.DateUtils;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
@@ -198,7 +200,7 @@ public class ConversationItem extends LinearLayout {
     }
 
     bubbleContainer.setState(transportationState, mediaCaptionState);
-}
+  }
 
   private void setSelectionBackgroundDrawables(MessageRecord messageRecord) {
     int[]      attributes = new int[]{R.attr.conversation_list_item_background_selected,
@@ -314,6 +316,9 @@ public class ConversationItem extends LinearLayout {
                  (messageRecord.isFailed()                     ||
                   messageRecord.isPendingInsecureSmsFallback() ||
                   messageRecord.isBundleKeyExchange()));
+    if (messageRecord.isFailed()) {
+      setOnLongClickListener(new MultiSelectLongClickListener());
+    }
   }
 
   private void setGroupMessageStatus(MessageRecord messageRecord) {
@@ -352,7 +357,9 @@ public class ConversationItem extends LinearLayout {
 
   private void resolveMedia(MediaMmsMessageRecord messageRecord) {
     if (hasMedia(messageRecord)) {
-      mediaThumbnail.setImageResource(messageRecord.getSlideDeckFuture(), masterSecret);
+      mediaThumbnail.setImageResource(masterSecret, messageRecord.getId(),
+                                      messageRecord.getDateReceived(),
+                                      messageRecord.getSlideDeckFuture());
     }
   }
 
@@ -364,21 +371,17 @@ public class ConversationItem extends LinearLayout {
     contactPhoto.setAvatar(recipient, true);
     contactPhoto.setVisibility(View.VISIBLE);
   }
-
+  
   /// Event handlers
 
-  private void handleKeyExchangeClicked() {
-    Intent intent = new Intent(context, ReceiveKeyActivity.class);
-    intent.putExtra("recipient", messageRecord.getIndividualRecipient().getRecipientId());
-    intent.putExtra("recipient_device_id", messageRecord.getRecipientDeviceId());
-    intent.putExtra("body", messageRecord.getBody().getBody());
-    intent.putExtra("thread_id", messageRecord.getThreadId());
-    intent.putExtra("message_id", messageRecord.getId());
-    intent.putExtra("is_bundle", messageRecord.isBundleKeyExchange());
-    intent.putExtra("is_identity_update", messageRecord.isIdentityUpdate());
-    intent.putExtra("is_push", messageRecord.isPush());
-    intent.putExtra("sent", messageRecord.isOutgoing());
-    context.startActivity(intent);
+  private void handleApproveIdentity() {
+    List<IdentityKeyMismatch> mismatches = messageRecord.getIdentityKeyMismatches();
+
+    if (mismatches.size() != 1) {
+      throw new AssertionError("Identity mismatch count: " + mismatches.size());
+    }
+
+    new ConfirmIdentityDialog(context, masterSecret, messageRecord, mismatches.get(0)).show();
   }
 
   private class ThumbnailClickListener implements ThumbnailView.ThumbnailClickListener {
@@ -398,7 +401,9 @@ public class ConversationItem extends LinearLayout {
     public void onClick(final View v, final Slide slide) {
       if (!batchSelected.isEmpty()) {
         selectionClickListener.onItemClick(null, ConversationItem.this, -1, -1);
-      } else if (MediaPreviewActivity.isContentTypeSupported(slide.getContentType())) {
+      } else if (MediaPreviewActivity.isContentTypeSupported(slide.getContentType()) &&
+                 slide.getThumbnailUri() != null)
+      {
         Intent intent = new Intent(context, MediaPreviewActivity.class);
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         intent.setDataAndType(slide.getUri(), slide.getContentType());
@@ -406,7 +411,7 @@ public class ConversationItem extends LinearLayout {
         intent.putExtra(MediaPreviewActivity.DATE_EXTRA, messageRecord.getDateReceived());
 
         context.startActivity(intent);
-      } else {
+      } else if (slide.getThumbnailUri() != null) {
         AlertDialogWrapper.Builder builder = new AlertDialogWrapper.Builder(context);
         builder.setTitle(R.string.ConversationItem_view_secure_media_question);
         builder.setIconAttribute(R.attr.dialog_alert_icon);
@@ -449,19 +454,17 @@ public class ConversationItem extends LinearLayout {
 
   private class ClickListener implements View.OnClickListener {
     public void onClick(View v) {
-      if (messageRecord.isFailed()) {
+      if (messageRecord.isFailed() && !batchSelected.isEmpty()) {
+        selectionClickListener.onItemClick(null, ConversationItem.this, -1, -1);
+      } else if(messageRecord.isFailed()) {
         Intent intent = new Intent(context, MessageDetailsActivity.class);
         intent.putExtra(MessageDetailsActivity.MASTER_SECRET_EXTRA, masterSecret);
         intent.putExtra(MessageDetailsActivity.MESSAGE_ID_EXTRA, messageRecord.getId());
         intent.putExtra(MessageDetailsActivity.TYPE_EXTRA, messageRecord.isMms() ? MmsSmsDatabase.MMS_TRANSPORT : MmsSmsDatabase.SMS_TRANSPORT);
         intent.putExtra(MessageDetailsActivity.IS_PUSH_GROUP_EXTRA, groupThread && pushDestination);
         context.startActivity(intent);
-      } else if (messageRecord.isKeyExchange()           &&
-                 !messageRecord.isOutgoing()             &&
-                 !messageRecord.isProcessedKeyExchange() &&
-                 !messageRecord.isStaleKeyExchange())
-      {
-        handleKeyExchangeClicked();
+      } else if (!messageRecord.isOutgoing() && messageRecord.isIdentityMismatchFailure()) {
+        handleApproveIdentity();
       }
     }
   }

@@ -198,7 +198,7 @@ public class SmsDatabase extends MessagingDatabase {
   }
 
   public void markAsForcedSms(long id) {
-    updateTypeBitmask(id, 0, Types.MESSAGE_FORCE_SMS_BIT);
+    updateTypeBitmask(id, Types.PUSH_MESSAGE_BIT, Types.MESSAGE_FORCE_SMS_BIT);
   }
 
   public void markAsDecryptFailed(long id) {
@@ -303,7 +303,7 @@ public class SmsDatabase extends MessagingDatabase {
     database.update(TABLE_NAME, contentValues, null, null);
   }
 
-  protected void updateMessageBodyAndType(long messageId, String body, long maskOff, long maskOn) {
+  protected Pair<Long, Long> updateMessageBodyAndType(long messageId, String body, long maskOff, long maskOn) {
     SQLiteDatabase db = databaseHelper.getWritableDatabase();
     db.execSQL("UPDATE " + TABLE_NAME + " SET " + BODY + " = ?, " +
                    TYPE + " = (" + TYPE + " & " + (Types.TOTAL_MASK - maskOff) + " | " + maskOn + ") " +
@@ -315,6 +315,8 @@ public class SmsDatabase extends MessagingDatabase {
     DatabaseFactory.getThreadDatabase(context).update(threadId);
     notifyConversationListeners(threadId);
     notifyConversationListListeners();
+
+    return new Pair<>(messageId, threadId);
   }
 
   public Pair<Long, Long> copyMessageInbox(long messageId) {
@@ -366,7 +368,7 @@ public class SmsDatabase extends MessagingDatabase {
       recipients = RecipientFactory.getRecipientsFromString(context, message.getSender(), true);
     } else {
       Log.w(TAG, "Sender is null, returning unknown recipient");
-      recipients = new Recipients(Recipient.getUnknownRecipient(context));
+      recipients = RecipientFactory.getRecipientsFor(context, Recipient.getUnknownRecipient(context), false);
     }
 
     Recipients groupRecipients;
@@ -421,14 +423,12 @@ public class SmsDatabase extends MessagingDatabase {
   }
 
   protected long insertMessageOutbox(long threadId, OutgoingTextMessage message,
-                                     long type, boolean forceSms)
+                                     long type, boolean forceSms, long date)
   {
     if      (message.isKeyExchange())   type |= Types.KEY_EXCHANGE_BIT;
     else if (message.isSecureMessage()) type |= Types.SECURE_MESSAGE_BIT;
     else if (message.isEndSession())    type |= Types.END_SESSION_BIT;
     if      (forceSms)                  type |= Types.MESSAGE_FORCE_SMS_BIT;
-
-    long date = System.currentTimeMillis();
 
     ContentValues contentValues = new ContentValues(6);
     contentValues.put(ADDRESS, PhoneNumberUtils.formatNumber(message.getRecipients().getPrimaryRecipient().getNumber()));
@@ -615,13 +615,13 @@ public class SmsDatabase extends MessagingDatabase {
         Recipients recipients = RecipientFactory.getRecipientsFromString(context, address, false);
 
         if (recipients == null || recipients.isEmpty()) {
-          return new Recipients(Recipient.getUnknownRecipient(context));
+          return RecipientFactory.getRecipientsFor(context, Recipient.getUnknownRecipient(context), false);
         }
 
         return recipients;
       } else {
         Log.w(TAG, "getRecipientsFor() address is null");
-        return new Recipients(Recipient.getUnknownRecipient(context));
+        return RecipientFactory.getRecipientsFor(context, Recipient.getUnknownRecipient(context), false);
       }
     }
 

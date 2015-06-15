@@ -145,7 +145,7 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
 		  issuers.addAll(Arrays.asList(((X509TrustManager)manager).getAcceptedIssuers()));
 	  }
 	  final Context appCtx = getApplicationContext();
-	  Android.Pipe pipe = Android.NewPipe(org.thoughtcrime.securesms.Release.PUSH_URL,
+	  Android.Pipe pipe = Android.NewPipe(org.thoughtcrime.securesms.BuildConfig.PUSH_URL,
 		  wrapWakeLock(wakeLock), wrapWakeLock(readWakeLock),
 		  new Android.CredentialsProvider.Stub() {
 		  @Override public String User() {

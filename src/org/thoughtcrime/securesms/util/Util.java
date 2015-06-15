@@ -18,14 +18,17 @@ package org.thoughtcrime.securesms.util;
 
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
+import android.app.ActivityManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Typeface;
 import android.os.Build;
 import android.os.Build.VERSION;
 import android.os.Build.VERSION_CODES;
+import android.os.Handler;
 import android.os.Looper;
 import android.provider.Telephony;
+import android.support.annotation.Nullable;
 import android.telephony.TelephonyManager;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -45,6 +48,7 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -57,10 +61,11 @@ import ws.com.google.android.mms.pdu.CharacterSets;
 import ws.com.google.android.mms.pdu.EncodedStringValue;
 
 public class Util {
+  public static Handler handler = new Handler(Looper.getMainLooper());
 
   public static String join(Collection<String> list, String delimiter) {
     StringBuilder result = new StringBuilder();
-    int i=0;
+    int i = 0;
 
     for (String item : list) {
       result.append(item);
@@ -70,6 +75,17 @@ public class Util {
     }
 
     return result.toString();
+  }
+
+  public static String join(long[] list, String delimeter) {
+    StringBuilder sb = new StringBuilder();
+
+    for (int j=0;j<list.length;j++) {
+      if (j != 0) sb.append(delimeter);
+      sb.append(list[j]);
+    }
+
+    return sb.toString();
   }
 
   public static ExecutorService newSingleThreadedLifoExecutor() {
@@ -299,9 +315,34 @@ public class Util {
     return false; //(VERSION.SDK_INT >= VERSION_CODES.LOLLIPOP) || OutgoingLegacyMmsConnection.isConnectionPossible(context);
   }
 
+  public static boolean isMainThread() {
+    return Looper.myLooper() == Looper.getMainLooper();
+  }
+
   public static void assertMainThread() {
-    if (Looper.myLooper() != Looper.getMainLooper()) {
+    if (!isMainThread()) {
       throw new AssertionError("Main-thread assertion failed.");
     }
+  }
+
+  public static void runOnMain(Runnable runnable) {
+    if (isMainThread()) runnable.run();
+    else                handler.post(runnable);
+  }
+
+  public static boolean equals(@Nullable Object a, @Nullable Object b) {
+    return a == b || (a != null && a.equals(b));
+  }
+
+  public static int hashCode(@Nullable Object... objects) {
+    return Arrays.hashCode(objects);
+  }
+
+  @TargetApi(VERSION_CODES.KITKAT)
+  public static boolean isLowMemory(Context context) {
+    ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+
+    return (VERSION.SDK_INT >= VERSION_CODES.KITKAT && activityManager.isLowRamDevice()) ||
+           activityManager.getMemoryClass() <= 64;
   }
 }
