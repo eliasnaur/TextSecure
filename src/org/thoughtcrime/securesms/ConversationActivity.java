@@ -291,7 +291,7 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
     }
 
     if (isSingleConversation()) {
-      inflater.inflate(R.menu.conversation_callable, menu);
+      //inflater.inflate(R.menu.conversation_callable, menu);
     } else if (isGroupConversation()) {
       inflater.inflate(R.menu.conversation_group_options, menu);
 
