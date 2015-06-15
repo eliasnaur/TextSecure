@@ -222,6 +222,10 @@ func (p *Pipe) ping() {
 }
 
 func (p *Pipe) checkTimeout() {
+	var wakeup time.Duration
+	defer func() {
+		p.wakeupIn(wakeup)
+	}()
 	now := time.Now()
 	if !p.pinged {
 		p.pingDelay = clampDuration(p.pingDelay, minPingDelay, maxPingDelay)
@@ -229,9 +233,9 @@ func (p *Pipe) checkTimeout() {
 		if p.notified || now.After(nextPing) {
 			p.ping()
 			p.lastAct = now
-			p.wakeupIn(pingWait)
+			wakeup = pingWait
 		} else {
-			p.wakeupIn(nextPing.Sub(now))
+			wakeup = nextPing.Sub(now)
 		}
 	} else {
 		timeout := p.lastAct.Add(pingWait)
@@ -243,9 +247,10 @@ func (p *Pipe) checkTimeout() {
 				p.minPongs *= 2
 				log.Printf("decreased websocket timeout to %s, min pongs %d", p.pingDelay, p.minPongs)
 			}
+			wakeup = p.retryDelay
 			return
 		}
-		p.wakeupIn(timeout.Sub(now))
+		wakeup = timeout.Sub(now)
 	}
 }
 
