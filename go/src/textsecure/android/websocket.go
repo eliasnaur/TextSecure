@@ -25,15 +25,15 @@ type (
 		retryDelay time.Duration
 		pingDelay  time.Duration
 		minPongs   int
-		pongs      int
 		notified   bool
 		lastAct    time.Time
-		pinged     bool
 		pio        *pipeIO
 		wl         WakeLock
 		rWL        WakeLock
 	}
 	pipeIO struct {
+		pinged    bool
+		pongs     int
 		ponger    chan struct{}
 		closer    chan struct{}
 		ws        *websocket.Conn
@@ -211,10 +211,10 @@ func (p *Pipe) connect() {
 	go p.pio.connecter(p)
 }
 
-func (p *Pipe) ping() {
+func (p *pipeIO) ping() {
 	p.pinged = true
 	select {
-	case p.pio.writer <- p.callbacks.NewKeepAliveMessage():
+	case p.writer <- p.callbacks.NewKeepAliveMessage():
 		log.Println("sent ping")
 	default:
 		log.Println("no ping - write queue full")
@@ -227,11 +227,11 @@ func (p *Pipe) checkTimeout() {
 		p.wakeupIn(wakeup)
 	}()
 	now := time.Now()
-	if !p.pinged {
+	if !p.pio.pinged {
 		p.pingDelay = clampDuration(p.pingDelay, minPingDelay, maxPingDelay)
 		nextPing := p.lastAct.Add(p.pingDelay)
 		if p.notified || now.After(nextPing) {
-			p.ping()
+			p.pio.ping()
 			p.lastAct = now
 			wakeup = pingWait
 		} else {
@@ -240,13 +240,13 @@ func (p *Pipe) checkTimeout() {
 	} else {
 		timeout := p.lastAct.Add(pingWait)
 		if now.After(timeout) {
-			p.pio.close()
-			p.pio = nil
-			if p.pongs == 0 {
+			if p.pio.pongs == 0 {
 				p.pingDelay -= pingDelayStep
 				p.minPongs *= 2
 				log.Printf("decreased websocket timeout to %s, min pongs %d", p.pingDelay, p.minPongs)
 			}
+			p.pio.close()
+			p.pio = nil
 			wakeup = p.retryDelay
 			return
 		}
@@ -255,16 +255,16 @@ func (p *Pipe) checkTimeout() {
 }
 
 func (p *Pipe) pong() {
-	if p.pinged && !p.notified {
-		p.pongs++
-		if p.pongs >= p.minPongs {
+	if p.pio.pinged && !p.notified {
+		p.pio.pongs++
+		if p.pio.pongs >= p.minPongs {
 			p.pingDelay += pingDelayStep
-			p.pongs = 0
+			p.pio.pongs = 0
 			log.Printf("increased websocket timeout to %s", p.pingDelay)
 		}
 	}
 	p.notified = false
-	p.pinged = false
+	p.pio.pinged = false
 	p.lastAct = time.Now()
 }
 
@@ -325,7 +325,9 @@ func (p *Pipe) loop() {
 			p.notified = true
 			p.pingDelay = 0
 			p.minPongs = 1
-			p.pongs = 0
+			if pio := p.pio; pio != nil {
+				pio.pongs = 0
+			}
 			p.retryDelay = 0
 		case <-p.notifier:
 			log.Println("websocket notified")

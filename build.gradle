@@ -132,7 +132,7 @@ dependencyVerification {
             'com.fasterxml.jackson.core:jackson-core:cbf4604784b4de226262845447a1ad3bb38a6728cebe86562e2c5afada8be2c0',
             'com.android.support:support-v4:1e2e4d35ac7fd30db5ce3bc177b92e4d5af86acef2ef93e9221599d733346f56',
             'com.android.support:support-annotations:7bc07519aa613b186001160403bcfd68260fa82c61cc7e83adeedc9b862b94ae',
-			'go.textsecure:android:67bb7c31e47260fc65d6915964de7ac5ec02beff008ce77dcd8618ab96fc36d3',
+			'go.textsecure:android:9446ff7d6b53f41fd897401e1cc703f5fbe5fe63f31fc5c6a0ad49c5af6cb7c5',
     ]
 }
 
