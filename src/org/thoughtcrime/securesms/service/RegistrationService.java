@@ -21,7 +21,6 @@ import org.thoughtcrime.securesms.database.DatabaseFactory;
 import org.thoughtcrime.securesms.push.TextSecureCommunicationFactory;
 import org.thoughtcrime.securesms.recipients.Recipient;
 import org.thoughtcrime.securesms.recipients.RecipientFactory;
-import org.thoughtcrime.securesms.recipients.RecipientFormattingException;
 import org.thoughtcrime.securesms.util.DirectoryHelper;
 import org.thoughtcrime.securesms.util.TextSecurePreferences;
 import org.thoughtcrime.securesms.util.Util;
@@ -35,6 +34,7 @@ import org.whispersystems.textsecure.api.push.exceptions.AuthorizationFailedExce
 import org.whispersystems.textsecure.api.push.exceptions.ExpectationFailedException;
 
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -78,7 +78,7 @@ public class RegistrationService extends Service {
 
   private volatile RegistrationState registrationState = new RegistrationState(RegistrationState.STATE_IDLE);
 
-  private volatile Handler                 registrationStateHandler;
+  private volatile WeakReference<Handler>  registrationStateHandler;
   private volatile ChallengeReceiver       challengeReceiver;
   private          String                  challenge;
   private          long                    verificationStartTime;
@@ -311,6 +311,8 @@ public class RegistrationService extends Service {
   private void setState(RegistrationState state) {
     this.registrationState = state;
 
+    Handler registrationStateHandler = this.registrationStateHandler.get();
+
     if (registrationStateHandler != null) {
       registrationStateHandler.obtainMessage(state.state, state).sendToTarget();
     }
@@ -332,7 +334,7 @@ public class RegistrationService extends Service {
   }
 
   public void setRegistrationStateHandler(Handler registrationStateHandler) {
-    this.registrationStateHandler = registrationStateHandler;
+    this.registrationStateHandler = new WeakReference<>(registrationStateHandler);
   }
 
   public class RegistrationServiceBinder extends Binder {
