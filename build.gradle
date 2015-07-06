@@ -143,7 +143,7 @@ dependencyVerification {
             'org.whispersystems:curve25519-java:9ccef8f5aba05d9942336f023c589d6278b4f9135bdc34a7bade1f4e7ad65fa3',
             'com.android.support:support-v4:1e2e4d35ac7fd30db5ce3bc177b92e4d5af86acef2ef93e9221599d733346f56',
             'com.android.support:support-annotations:7bc07519aa613b186001160403bcfd68260fa82c61cc7e83adeedc9b862b94ae',
-			'go.textsecure:android:ae2f28b2e741b3a7453ca272d924216a7f717a5628075969e04ee38fed432f45',
+			'go.textsecure:android:1c029ed7ff94880d2fc8317cf08d2146314b46cdf3214f6c279cb35d37899fa6',
     ]
 }
 
