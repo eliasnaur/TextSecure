@@ -129,8 +129,8 @@ public class ApplicationContext extends Application implements DependencyInjecto
   }*/
 
   private void initializeKeepAlive() {
-	  if (BuildConfig.DEBUG)
-		  go.android.Android.InitLog("https://goandroidlog.appspot.com", getFilesDir().getAbsolutePath());
+/*	  if (BuildConfig.DEBUG)
+		  go.android.Android.InitLog("https://goandroidlog.appspot.com", getFilesDir().getAbsolutePath());*/
 	  Intent service = new Intent(MessageRetrievalService.ACTION_INIT, null, this, MessageRetrievalService.class);
 	  startService(service);
   }
