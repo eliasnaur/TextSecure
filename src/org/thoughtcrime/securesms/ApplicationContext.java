@@ -54,6 +54,10 @@ public class ApplicationContext extends Application implements DependencyInjecto
   private JobManager jobManager;
   private ObjectGraph objectGraph;
 
+  static {
+	  System.loadLibrary("gojni");
+  }
+
   public static ApplicationContext getInstance(Context context) {
     return (ApplicationContext)context.getApplicationContext();
   }
@@ -125,7 +129,6 @@ public class ApplicationContext extends Application implements DependencyInjecto
   }*/
 
   private void initializeKeepAlive() {
-	  go.Go.init(this);
 	  if (BuildConfig.DEBUG)
 		  go.android.Android.InitLog("https://goandroidlog.appspot.com", getFilesDir().getAbsolutePath());
 	  Intent service = new Intent(MessageRetrievalService.ACTION_INIT, null, this, MessageRetrievalService.class);
