@@ -20,14 +20,14 @@ import static org.whispersystems.textsecure.api.TextSecureMessageSender.EventLis
 public class TextSecureCommunicationFactory {
 
   public static TextSecureAccountManager createManager(Context context) {
-    return new TextSecureAccountManager(BuildConfig.PUSH_URL,
+    return new TextSecureAccountManager(BuildConfig.PUSH_URLS,
                                         new TextSecurePushTrustStore(context),
                                         TextSecurePreferences.getLocalNumber(context),
                                         TextSecurePreferences.getPushServerPassword(context));
   }
 
   public static TextSecureAccountManager createManager(Context context, String number, String password) {
-    return new TextSecureAccountManager(BuildConfig.PUSH_URL, new TextSecurePushTrustStore(context),
+    return new TextSecureAccountManager(BuildConfig.PUSH_URLS, new TextSecurePushTrustStore(context),
                                         number, password);
   }
 

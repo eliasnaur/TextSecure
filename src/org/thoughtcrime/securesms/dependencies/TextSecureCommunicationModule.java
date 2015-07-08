@@ -52,7 +52,7 @@ public class TextSecureCommunicationModule {
   }
 
   @Provides TextSecureAccountManager provideTextSecureAccountManager() {
-    return new TextSecureAccountManager(BuildConfig.PUSH_URL,
+    return new TextSecureAccountManager(BuildConfig.PUSH_URLS,
                                         new TextSecurePushTrustStore(context),
                                         TextSecurePreferences.getLocalNumber(context),
                                         TextSecurePreferences.getPushServerPassword(context));
@@ -62,7 +62,7 @@ public class TextSecureCommunicationModule {
     return new TextSecureMessageSenderFactory() {
       @Override
       public TextSecureMessageSender create(MasterSecret masterSecret) {
-        return new TextSecureMessageSender(BuildConfig.PUSH_URL,
+        return new TextSecureMessageSender(BuildConfig.PUSH_URLS,
                                            new TextSecurePushTrustStore(context),
                                            TextSecurePreferences.getLocalNumber(context),
                                            TextSecurePreferences.getPushServerPassword(context),
@@ -74,7 +74,7 @@ public class TextSecureCommunicationModule {
   }
 
   @Provides TextSecureMessageReceiver provideTextSecureMessageReceiver() {
-    return new TextSecureMessageReceiver(BuildConfig.PUSH_URL,
+    return new TextSecureMessageReceiver(BuildConfig.PUSH_URLS,
                                          new TextSecurePushTrustStore(context),
                                          new DynamicCredentialsProvider(context));
   }

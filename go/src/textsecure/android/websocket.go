@@ -14,7 +14,8 @@ import (
 
 type (
 	Pipe struct {
-		url        string
+		urls       []string
+		lastURL    int
 		certPool   *x509.CertPool
 		creds      CredentialsProvider
 		callbacks  Callbacks
@@ -73,10 +74,8 @@ func InitLog(host, dir string) {
 	log.Init(host, dir)
 }
 
-func NewPipe(url string, wl, rWL WakeLock, creds CredentialsProvider, callbacks Callbacks) *Pipe {
-	url = strings.Replace(url, "https://", "wss://", 1) + "/v1/websocket/"
+func NewPipe(wl, rWL WakeLock, creds CredentialsProvider, callbacks Callbacks) *Pipe {
 	return &Pipe{
-		url:       url,
 		certPool:  x509.NewCertPool(),
 		creds:     creds,
 		callbacks: callbacks,
@@ -88,6 +87,10 @@ func NewPipe(url string, wl, rWL WakeLock, creds CredentialsProvider, callbacks 
 		rWL:       rWL,
 		minPongs:  1,
 	}
+}
+
+func (p *Pipe) AddURL(url string) {
+	p.urls = append(p.urls, strings.Replace(url, "https://", "wss://", 1)+"/v1/websocket/")
 }
 
 func (p *Pipe) AddAcceptedCert(encCert []byte) error {
@@ -123,15 +126,28 @@ func (p *Pipe) Start() {
 }
 
 func (p *pipeIO) connect(pipe *Pipe) (*websocket.Conn, error) {
-	log.Println("connecting to websocket " + pipe.url)
 	user, pass := pipe.creds.User(), pipe.creds.Password()
-	authURL := pipe.url + "?login=" + url.QueryEscape(user) + "&password=" + url.QueryEscape(pass)
 	dialer := &websocket.Dialer{
 		TLSClientConfig:  &tls.Config{RootCAs: pipe.certPool},
 		HandshakeTimeout: 30 * time.Second,
 	}
-	ws, _, err := dialer.Dial(authURL, http.Header{})
-	return ws, err
+	var firstErr error
+	for i := 0; i < len(pipe.urls); i++ {
+		idx := (i + pipe.lastURL) % len(pipe.urls)
+		u := pipe.urls[idx]
+		log.Println("connecting to websocket " + u)
+		authURL := u + "?login=" + url.QueryEscape(user) + "&password=" + url.QueryEscape(pass)
+		ws, _, err := dialer.Dial(authURL, http.Header{})
+		if err != nil {
+			if firstErr == nil {
+				firstErr = err
+			}
+			continue
+		}
+		pipe.lastURL = idx
+		return ws, nil
+	}
+	return nil, firstErr
 }
 
 func (p *pipeIO) connecter(pipe *Pipe) {

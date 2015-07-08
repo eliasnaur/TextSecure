@@ -145,7 +145,7 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
 		  issuers.addAll(Arrays.asList(((X509TrustManager)manager).getAcceptedIssuers()));
 	  }
 	  final Context appCtx = getApplicationContext();
-	  Android.Pipe pipe = Android.NewPipe(org.thoughtcrime.securesms.BuildConfig.PUSH_URL,
+	  Android.Pipe pipe = Android.NewPipe(
 		  wrapWakeLock(wakeLock), wrapWakeLock(readWakeLock),
 		  new Android.CredentialsProvider.Stub() {
 		  @Override public String User() {
@@ -175,6 +175,9 @@ public class MessageRetrievalService extends Service implements /*Runnable, */In
 			  return isConnectionNecessary();
 		  }
 	  });
+	  for (String url : org.thoughtcrime.securesms.BuildConfig.PUSH_URLS) {
+			pipe.AddURL(url);
+	  }
 	  for (int i = 0; i < issuers.size(); i++) {
 		  X509Certificate cert = issuers.get(i);
 		  byte[] encCert;
