@@ -161,12 +161,9 @@ public class RegistrationProgressActivity extends BaseActionBarActivity {
     this.verifyButton              = (Button)      findViewById(R.id.verify_button);
     this.codeEditText              = (EditText)    findViewById(R.id.telephone_code);
     this.timeoutProgressLayout     = (RelativeLayout) findViewById(R.id.timer_progress_layout);
-    Button editButton              = (Button)      findViewById(R.id.edit_button);
+/*    Button editButton              = (Button)      findViewById(R.id.edit_button);
 
-    editButton.setOnClickListener(new EditButtonListener());
-    this.verificationFailureButton.setOnClickListener(new EditButtonListener());
-    this.connectivityFailureButton.setOnClickListener(new EditButtonListener());
-    this.idExistsButton.setOnClickListener(new EditButtonListener());
+    editButton.setOnClickListener(new EditButtonListener());*/
   }
 
   private void initializeLinks() {
@@ -305,6 +302,7 @@ public class RegistrationProgressActivity extends BaseActionBarActivity {
     this.verificationFailureLayout.setVisibility(View.GONE);
     this.idExistsLayout.setVisibility(View.VISIBLE);
     this.connectivityFailureLayout.setVisibility(View.GONE);
+    this.idExistsButton.setOnClickListener(new EditButtonListener(state.number));
     this.idExistsButton.setText(String.format(getString(R.string.RegistrationProgressActivity_edit_s),
                                                          state.number));
   }
@@ -330,6 +328,7 @@ public class RegistrationProgressActivity extends BaseActionBarActivity {
     this.verificationFailureLayout.setVisibility(View.VISIBLE);
     this.verificationFailureButton.setText(String.format(getString(R.string.RegistrationProgressActivity_edit_s),
                                                          /*PhoneNumberFormatter.formatNumberInternational(*/state.number/*)*/));
+     this.verificationFailureButton.setOnClickListener(new EditButtonListener(state.number));
   }
 
   private void handleConnectivityError(RegistrationState state) {
@@ -339,6 +338,7 @@ public class RegistrationProgressActivity extends BaseActionBarActivity {
     this.connectivityFailureLayout.setVisibility(View.VISIBLE);
     this.connectivityFailureButton.setText(String.format(getString(R.string.RegistrationProgressActivity_edit_s),
                                                          /*PhoneNumberFormatter.formatNumberInternational(*/state.number/*)*/));
+    this.connectivityFailureButton.setOnClickListener(new EditButtonListener(state.number));
   }
 
   private void handleMultiRegistrationError(RegistrationState state) {
@@ -444,16 +444,23 @@ public class RegistrationProgressActivity extends BaseActionBarActivity {
   }
 
   private class EditButtonListener implements View.OnClickListener {
-    @Override
-    public void onClick(View v) {
-      shutdownService();
+      private final String handle;
 
-      Intent activityIntent = new Intent(RegistrationProgressActivity.this, RegistrationActivity.class);
-      activityIntent.putExtra("master_secret", masterSecret);
-      startActivity(activityIntent);
-      finish();
+      EditButtonListener(String handle) {
+          this.handle = handle;
+      }
+
+      @Override
+      public void onClick(View v) {
+        shutdownService();
+
+        Intent activityIntent = new Intent(RegistrationProgressActivity.this, RegistrationActivity.class);
+        activityIntent.putExtra("master_secret", masterSecret);
+        activityIntent.putExtra("handle", handle);
+        startActivity(activityIntent);
+        finish();
+      }
     }
-  }
 
   private class RegistrationReceiver extends BroadcastReceiver {
     @Override

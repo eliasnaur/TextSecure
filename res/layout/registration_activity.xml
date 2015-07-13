@@ -28,6 +28,7 @@
                       android:layout_weight="1"
                       android:hint="@string/registration_activity__handle"
                       android:gravity="center"
+                      android:selectAllOnFocus="true"
                       android:singleLine="true"/>
 
         </LinearLayout>

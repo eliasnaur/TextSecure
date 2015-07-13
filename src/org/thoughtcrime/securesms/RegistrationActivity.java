@@ -70,7 +70,9 @@ public class RegistrationActivity extends BaseActionBarActivity {
     } else {
       this.skipButton.setVisibility(View.INVISIBLE);
     }
-
+    String handleStr = getIntent().getStringExtra("handle");
+    if (!TextUtils.isEmpty(handleStr))
+        handle.setText(handleStr);
     /*findViewById(R.id.twilio_shoutout).setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
