@@ -71,7 +71,7 @@ public class RegistrationActivity extends BaseActionBarActivity {
       this.skipButton.setVisibility(View.INVISIBLE);
     }
 
-    findViewById(R.id.twilio_shoutout).setOnClickListener(new View.OnClickListener() {
+    /*findViewById(R.id.twilio_shoutout).setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
         Intent intent = new Intent();
@@ -80,7 +80,7 @@ public class RegistrationActivity extends BaseActionBarActivity {
         intent.setData(Uri.parse("https://twilio.com"));
         startActivity(intent);
       }
-    });
+  });*/
   }
 
   private class CreateButtonListener implements View.OnClickListener {
