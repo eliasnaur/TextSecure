@@ -651,22 +651,22 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
   }
 
   private void handleAddAttachment() {
-    if (this.isMmsEnabled || DirectoryHelper.isPushDestination(this, getRecipients())) {
+    if (/*this.isMmsEnabled || */DirectoryHelper.isPushDestination(this, getRecipients())) {
       new AlertDialogWrapper.Builder(this).setAdapter(attachmentAdapter, new AttachmentTypeListener())
                                           .show();
-    } else {
-      handleManualMmsRequired();
+/*    } else {
+      handleManualMmsRequired();*/
     }
   }
 
-  private void handleManualMmsRequired() {
+/*  private void handleManualMmsRequired() {
     Toast.makeText(this, R.string.MmsDownloader_error_reading_mms_settings, Toast.LENGTH_LONG).show();
 
     Intent intent = new Intent(this, PromptMmsActivity.class);
     intent.putExtras(getIntent().getExtras());
     startActivity(intent);
   }
-
+*/
   ///// Initializers
 
   private void initializeDraft() {
@@ -1226,9 +1226,9 @@ public class ConversationActivity extends PassphraseRequiredActionBarActivity
         throw new RecipientFormattingException("Badly formatted");
       }
 
-      if ((!recipients.isSingleRecipient() || recipients.isEmailRecipient()) && !isMmsEnabled) {
+      /*if ((!recipients.isSingleRecipient() || recipients.isEmailRecipient()) && !isMmsEnabled) {
         handleManualMmsRequired();
-      } else if (attachmentManager.isAttachmentPresent() || !recipients.isSingleRecipient() || recipients.isGroupRecipient() || recipients.isEmailRecipient()) {
+      } else */if (attachmentManager.isAttachmentPresent() || !recipients.isSingleRecipient() || recipients.isGroupRecipient() || recipients.isEmailRecipient()) {
         sendMediaMessage(forceSms);
       } else {
         sendTextMessage(forceSms);
