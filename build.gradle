@@ -171,7 +171,7 @@ android {
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         buildConfigField "long", "BUILD_TIMESTAMP", System.currentTimeMillis() + "L"
-        buildConfigField "String[]", "PUSH_URLS", "{\"https://backend.hoenirencrypted.eu\", \"https://backend.hoenirencrypted.ch\", \"https://backend.hoenirencrypted.cz\", \"https://backend.hoenirencrypted.nl\", \"https://backend.hoenirencrypted.is\", \"https://backend.hoenirencrypted.in\", \"https://backend.hoenirencrypted.bit\"}"
+        buildConfigField "String[]", "PUSH_URLS", "{\"https://backend.hoenirencrypted.ch\", \"https://backend.hoenirencrypted.eu\", \"https://backend.hoenirencrypted.cz\", \"https://backend.hoenirencrypted.nl\", \"https://backend.hoenirencrypted.is\", \"https://backend.hoenirencrypted.in\", \"https://backend.hoenirencrypted.bit\"}"
         buildConfigField "boolean", "DEV_BUILD", "false"
     }
 
